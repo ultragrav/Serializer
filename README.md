@@ -1,6 +1,11 @@
 # Serializer
 A simple but versatile serialization system
 
+## Installation
+Currently this project does not have a maven repository
+In order to use it, please install it into your local repository using:
+`gradlew install`
+
 ## Examples
 ```java
 import net.ultragrav.serializer.*;

@@ -28,12 +28,12 @@ hs_err_pid*
 
 # Gradle files
 .gradle/
-gralde/
+gradle/
 
 # Build files
 build/
 target/
 
 # Gradle executables
-./gradlew
-./gradlew.bat
+/gradlew
+/gradlew.bat

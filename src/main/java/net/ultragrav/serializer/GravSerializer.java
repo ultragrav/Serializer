@@ -14,6 +14,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+@SuppressWarnings("unchecked")
 public class GravSerializer {
     private static final boolean COMPRESS_DEFAULT = false;
 
@@ -143,8 +144,8 @@ public class GravSerializer {
         Serializers.serializeObject(this, o);
     }
 
-    public Object readObject(Object... args) {
-        return Serializers.deserializeObject(this, args);
+    public <T> T readObject(Object... args) {
+        return (T) Serializers.deserializeObject(this, args);
     }
 
     public long readLong() {

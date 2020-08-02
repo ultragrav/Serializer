@@ -1,8 +1,5 @@
 package net.ultragrav.serializer;
 
-import jdk.nashorn.internal.objects.annotations.Getter;
-import jdk.nashorn.internal.objects.annotations.Setter;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -27,16 +24,24 @@ public interface GravSerializable {
             argumentTypes[i + 1] = otherArguments[i].getClass();
             arguments[i + 1] = otherArguments[i];
         }
+        boolean c1 = false;
         try {
             Class<?> clazz = Class.forName(className);
             try {
                 Method m = clazz.getMethod("deserialize", argumentTypes);
                 return m.invoke(null, arguments);
-            } catch (Exception ignored) {
+            } catch (NoSuchMethodException ignored) {
+            } catch(NullPointerException e) {
+                c1  = true;
+            } catch(Exception e) {
+                e.printStackTrace();
             }
             Constructor<?> constructor = clazz.getConstructor(argumentTypes);
             return constructor.newInstance(arguments);
         } catch (Exception e) {
+            System.out.println("ERROR: Could NOT find a deserialization method for " + className);
+            if(c1)
+                System.out.println("WARNING: deserialize method is not static for " + className);
             e.printStackTrace();
             return null;
         }

@@ -16,6 +16,8 @@ public interface GravSerializable {
             className = className.replace(mapping.getKey(), mapping.getValue());
         }
 
+        serializer = serializer.readSerializer(); //Read the buffer
+
         Class<?>[] argumentTypes = new Class<?>[otherArguments.length + 1];
         Object[] arguments = new Object[otherArguments.length + 1];
         argumentTypes[0] = net.ultragrav.serializer.GravSerializer.class;
@@ -38,6 +40,9 @@ public interface GravSerializable {
             }
             Constructor<?> constructor = clazz.getConstructor(argumentTypes);
             return constructor.newInstance(arguments);
+        } catch(ClassNotFoundException e) {
+            System.out.println("COULD NOT FIND CLASS " + className);
+            return null;
         } catch (Exception e) {
             System.out.println("ERROR: Could NOT find a deserialization method for " + className);
             if(c1)
@@ -49,7 +54,10 @@ public interface GravSerializable {
 
     static void serializeObject(net.ultragrav.serializer.GravSerializer serializer, GravSerializable serializable) {
         serializer.writeString(serializable.getClass().getName());
-        serializable.serialize(serializer);
+        GravSerializer serializer1 = new GravSerializer(); //Buffer the object - This is for the reason of if a object's class could not be found on deserialization
+        //Then it should be able to skip the object
+        serializable.serialize(serializer1); //Serialize
+        serializer.writeSerializer(serializer1); //Write the buffer
     }
 
     void serialize(net.ultragrav.serializer.GravSerializer serializer);

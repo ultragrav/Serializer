@@ -4,15 +4,17 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public interface GravSerializable {
 
     Map<String, String> relocationMappings = new HashMap<>();
 
+
     static Object deserializeObject(net.ultragrav.serializer.GravSerializer serializer, Object... otherArguments) {
 
         String className = serializer.readString();
-        for(Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
+        for (Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
             className = className.replace(mapping.getKey(), mapping.getValue());
         }
 
@@ -33,19 +35,19 @@ public interface GravSerializable {
                 Method m = clazz.getMethod("deserialize", argumentTypes);
                 return m.invoke(null, arguments);
             } catch (NoSuchMethodException ignored) {
-            } catch(NullPointerException e) {
-                c1  = true;
-            } catch(Exception e) {
+            } catch (NullPointerException e) {
+                c1 = true;
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             Constructor<?> constructor = clazz.getConstructor(argumentTypes);
             return constructor.newInstance(arguments);
-        } catch(ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             System.out.println("COULD NOT FIND CLASS " + className);
             return null;
         } catch (Exception e) {
             System.out.println("ERROR: Could NOT find a deserialization method for " + className);
-            if(c1)
+            if (c1)
                 System.out.println("WARNING: deserialize method is not static for " + className);
             e.printStackTrace();
             return null;

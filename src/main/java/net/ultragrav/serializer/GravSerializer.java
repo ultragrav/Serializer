@@ -190,7 +190,7 @@ public class GravSerializer {
         int length = readInt();
         byte[] bites = new byte[length];
         for (int i = 0; i < length; i++) {
-            bites[i] = bytes.get(i);
+            bites[i] = readByte();
         }
         return bites;
     }

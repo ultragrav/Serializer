@@ -70,6 +70,10 @@ public class GravSerializer {
         this.reading = mark;
     }
 
+    public int size() {
+        return this.bytes.size();
+    }
+
     public void writeString(String str) {
         int size = str.length();
         writeInt(size);
@@ -137,6 +141,14 @@ public class GravSerializer {
         return (T) Serializers.deserializeObject(this, args);
     }
 
+    public GravSerializer readSerializer() {
+        return new GravSerializer(this.readByteArray());
+    }
+
+    public void writeSerializer(GravSerializer serializer) {
+        this.writeByteArray(serializer.toByteArray());
+    }
+
     public long readLong() {
         long out = 0L;
         for (int i = 0; i < 8; i++) {
@@ -167,7 +179,7 @@ public class GravSerializer {
         int length = readInt();
         byte[] bites = new byte[length];
         for (int i = 0; i < length; i++) {
-            bites[i] = bytes.get(i);
+            bites[i] = readByte();
         }
         return bites;
     }

@@ -1,22 +1,28 @@
 package net.ultragrav.serializer;
 
-import jdk.nashorn.internal.objects.annotations.Getter;
-import jdk.nashorn.internal.objects.annotations.Setter;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public interface GravSerializable {
-
     Map<String, String> relocationMappings = new HashMap<>();
 
     static Object deserializeObject(net.ultragrav.serializer.GravSerializer serializer, Object... otherArguments) {
 
         String className = serializer.readString();
-        for(Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
-            className = className.replace(mapping.getKey(), mapping.getValue());
+        // Do exact matches first
+        for (Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
+            if (className.equals(mapping.getKey())) {
+                className = mapping.getValue();
+            }
+        }
+        // Then packages, etc.
+        for (Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
+            className = className.replace(Pattern.quote(mapping.getKey()), Matcher.quoteReplacement(mapping.getValue()));
         }
 
         Class<?>[] argumentTypes = new Class<?>[otherArguments.length + 1];

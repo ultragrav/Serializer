@@ -1,6 +1,7 @@
 package net.ultragrav.serializer;
 
 import com.google.common.primitives.Bytes;
+import net.ultragrav.serializer.compressors.StandardCompressor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,8 +17,6 @@ import java.util.zip.Inflater;
 
 @SuppressWarnings("unchecked")
 public class GravSerializer {
-    private static final boolean COMPRESS_DEFAULT = false;
-
     private List<Byte> bytes = new ArrayList<>();
     private int reading = 0;
     private int mark = 0;
@@ -26,34 +25,24 @@ public class GravSerializer {
     }
 
     public GravSerializer(InputStream is) throws IOException {
-        this(is, COMPRESS_DEFAULT);
+        this(is, null);
     }
 
-    public GravSerializer(InputStream is, boolean compressed) throws IOException {
+    public GravSerializer(InputStream is, Compressor compressor) throws IOException {
         int i;
         while ((i = is.read()) != -1) {
             bytes.add((byte) i);
         }
         is.close();
-        if (compressed) {
+        if (compressor != null) {
+            byte[] data = toByteArray();
+            byte[] output;
             try {
-                byte[] data = toByteArray();
-                Inflater inflater = new Inflater();
-                inflater.setInput(data);
-
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-                byte[] buffer = new byte[1024];
-                while (!inflater.finished()) {
-                    int count = inflater.inflate(buffer);
-                    outputStream.write(buffer, 0, count);
-                }
-                outputStream.close();
-                byte[] output = outputStream.toByteArray();
-
-                bytes = Bytes.asList(output);
-            } catch(DataFormatException e) {
-                e.printStackTrace();
+                output = compressor.decompress(data);
+            } catch(DecompressionException e) {
+                output = StandardCompressor.instance.decompress(data);
             }
+            bytes = Bytes.asList(output);
         }
     }
 
@@ -232,25 +221,14 @@ public class GravSerializer {
     }
 
     public void writeToStream(OutputStream stream) throws IOException {
-        writeToStream(stream, COMPRESS_DEFAULT);
+        writeToStream(stream, null);
     }
 
-    public void writeToStream(OutputStream stream, boolean compress) throws IOException {
+    public void writeToStream(OutputStream stream, Compressor compressor) throws IOException {
         byte[] bt = toByteArray();
 
-        if (compress) {
-            Deflater deflater = new Deflater();
-            deflater.setInput(bt);
-
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-            deflater.finish();
-            byte[] buffer = new byte[1024];
-            while (!deflater.finished()) {
-                int count = deflater.deflate(buffer);
-                os.write(buffer, 0, count);
-            }
-            bt = os.toByteArray();
+        if (compressor != null) {
+            bt = compressor.compress(bt);
         }
 
         for (byte b : bt) {

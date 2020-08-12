@@ -253,7 +253,7 @@ public class Serializers {
         if (type == 0) {
             return null;
         }
-        if (type >= SERIALIZERS.size()) {
+        if (type > SERIALIZERS.size()) {
             throw new IllegalArgumentException("Invalid object type: " + type);
         }
         return SERIALIZERS.get(type - 1).getSerializer().deserialize(serializer, args);

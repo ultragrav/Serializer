@@ -7,7 +7,8 @@ import lombok.Getter;
 public class ObjectDeserializationException extends RuntimeException {
 
     public enum DeserializationExceptionCause {
-        NO_DESERIALIZATION_METHOD;
+        NO_DESERIALIZATION_METHOD,
+        CLASS_NOT_FOUND
     }
 
     private DeserializationExceptionCause cause;

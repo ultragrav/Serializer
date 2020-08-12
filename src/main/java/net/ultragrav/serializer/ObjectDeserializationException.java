@@ -1,6 +1,7 @@
 package net.ultragrav.serializer;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 public class ObjectDeserializationException extends RuntimeException {
@@ -9,8 +10,13 @@ public class ObjectDeserializationException extends RuntimeException {
         NO_DESERIALIZATION_METHOD;
     }
 
-    private int cause;
-    public ObjectDeserializationException(String message, int cause) {
+    private DeserializationExceptionCause cause;
+    public ObjectDeserializationException(String message, DeserializationExceptionCause cause) {
         super(message);
+        this.cause = cause;
+    }
+
+    public DeserializationExceptionCause getDeserializationCause() {
+        return cause;
     }
 }

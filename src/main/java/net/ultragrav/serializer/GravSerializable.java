@@ -55,11 +55,9 @@ public interface GravSerializable {
             System.out.println("COULD NOT FIND CLASS " + className);
             return null;
         } catch (Exception e) {
-            System.out.println("ERROR: Could NOT find a deserialization method for " + className);
-            if (c1)
-                System.out.println("WARNING: deserialize method is not static for " + className);
-            e.printStackTrace();
-            return null;
+            if (!c1)
+                throw new IllegalStateException("ERROR: Could NOT find a deserialization method for " + className);
+            throw new IllegalStateException("WARNING: deserialize method is not static for " + className);
         }
     }
 

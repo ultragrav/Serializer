@@ -11,8 +11,8 @@ public class ObjectDeserializationException extends RuntimeException {
     }
 
     private DeserializationExceptionCause cause;
-    public ObjectDeserializationException(String message, DeserializationExceptionCause cause) {
-        super(message);
+    public ObjectDeserializationException(String message, Throwable cause1, DeserializationExceptionCause cause) {
+        super(message, cause1);
         this.cause = cause;
     }
 

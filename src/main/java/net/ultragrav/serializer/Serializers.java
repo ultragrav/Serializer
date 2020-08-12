@@ -6,6 +6,7 @@ public class Serializers {
     private static final List<SerializerElement> SERIALIZERS = new ArrayList<>();
 
     static {
+        //0
         SERIALIZERS.add(new SerializerElement(String.class, new Serializer<String>() {
             @Override
             public void serialize(GravSerializer serializer, Object s) {
@@ -17,6 +18,7 @@ public class Serializers {
                 return serializer.readString();
             }
         }));
+        //1
         SERIALIZERS.add(new SerializerElement(byte[].class, new Serializer<byte[]>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -28,6 +30,7 @@ public class Serializers {
                 return serializer.readByteArray();
             }
         }));
+        //2
         SERIALIZERS.add(new SerializerElement(Byte.class, new Serializer<Byte>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -39,6 +42,7 @@ public class Serializers {
                 return serializer.readByte();
             }
         }));
+        //3
         SERIALIZERS.add(new SerializerElement(Double.class, new Serializer<Double>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -50,6 +54,7 @@ public class Serializers {
                 return serializer.readDouble();
             }
         }));
+        //4
         SERIALIZERS.add(new SerializerElement(Integer.class, new Serializer<Integer>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -61,6 +66,7 @@ public class Serializers {
                 return serializer.readInt();
             }
         }));
+        //5
         SERIALIZERS.add(new SerializerElement(Long.class, new Serializer<Long>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -72,6 +78,7 @@ public class Serializers {
                 return serializer.readLong();
             }
         }));
+        //6
         SERIALIZERS.add(new SerializerElement(UUID.class, new Serializer<UUID>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -83,6 +90,7 @@ public class Serializers {
                 return serializer.readUUID();
             }
         }));
+        //7
         SERIALIZERS.add(new SerializerElement(Map.class, new Serializer<Map<?, ?>>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -107,6 +115,7 @@ public class Serializers {
                 return map;
             }
         }));
+        //8
         SERIALIZERS.add(new SerializerElement(Map.Entry.class, new Serializer<Map.Entry<?, ?>>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -122,6 +131,7 @@ public class Serializers {
                 return new AbstractMap.SimpleEntry<>(key, value);
             }
         }));
+        //9
         SERIALIZERS.add(new SerializerElement(List.class, new Serializer<List<?>>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -142,6 +152,7 @@ public class Serializers {
                 return l;
             }
         }));
+        //10
         SERIALIZERS.add(new SerializerElement(Enum.class, new Serializer<Enum<?>>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -167,6 +178,7 @@ public class Serializers {
                 return null;
             }
         }));
+        //11
         SERIALIZERS.add(new SerializerElement(GravSerializable.class, new Serializer<GravSerializable>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -178,6 +190,7 @@ public class Serializers {
                 return (GravSerializable) GravSerializable.deserializeObject(serializer, args);
             }
         }));
+        //12
         SERIALIZERS.add(new SerializerElement(int[].class, new Serializer<int[]>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -198,6 +211,7 @@ public class Serializers {
                 return ret;
             }
         }));
+        //13
         SERIALIZERS.add(new SerializerElement(Object[].class, new Serializer<Object[]>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -218,7 +232,7 @@ public class Serializers {
                 return ret;
             }
         }));
-
+        //14
         SERIALIZERS.add(new SerializerElement(Boolean.class, new Serializer<Boolean>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
@@ -254,7 +268,7 @@ public class Serializers {
             return null;
         }
         if (type > SERIALIZERS.size()) {
-            throw new IllegalArgumentException("Invalid object type: " + type);
+            throw new IllegalArgumentException("Invalid object type: " + (type-1));
         }
         return SERIALIZERS.get(type - 1).getSerializer().deserialize(serializer, args);
     }

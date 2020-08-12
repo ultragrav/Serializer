@@ -56,8 +56,8 @@ public interface GravSerializable {
             return null;
         } catch (Exception e) {
             if (!c1)
-                throw new IllegalStateException("ERROR: Could NOT find a deserialization method for " + className);
-            throw new IllegalStateException("WARNING: deserialize method is not static for " + className);
+                throw new ObjectDeserializationException("ERROR: Could NOT find a deserialization method for " + className, 0);
+            throw new ObjectDeserializationException("ERROR: Deserialization method non-static for " + className, 0);
         }
     }
 

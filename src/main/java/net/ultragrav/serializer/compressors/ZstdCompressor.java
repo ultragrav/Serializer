@@ -22,6 +22,9 @@ public class ZstdCompressor implements Compressor {
     }
 
     public byte[] decompress(byte[] in) throws DecompressionException {
+        if(in.length < 4) {
+            return in;
+        }
         int out = 0;
         for (int i = 0; i < 4; i++) {
             out |= ((int) in[i] << (i * 8)) & (255 << (i * 8));

@@ -24,7 +24,7 @@ public class ZstdCompressor implements Compressor {
     public byte[] decompress(byte[] in) throws DecompressionException {
         int out = 0;
         for (int i = 0; i < 4; i++) {
-            out |= ((in[i] & 0xFF) << (i * 8)) & (255 << (i * 8));
+            out |= ((int) in[i] << (i * 8)) & (255 << (i * 8));
         }
         byte[] dat = new byte[in.length - 4];
         System.arraycopy(in, 4, dat, 0, dat.length);

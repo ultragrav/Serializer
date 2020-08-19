@@ -102,9 +102,7 @@ public class GravSerializer {
     public void writeByteArray(byte[] bites) {
         int size = bites.length;
         writeInt(size);
-        for (byte aByte : bites) {
-            this.bytes.add(aByte);
-        }
+        this.bytes.addAll(Bytes.asList(bites));
     }
 
     public void writeShort(short value) {

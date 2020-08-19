@@ -94,9 +94,7 @@ public class GravSerializer {
     public void writeString(String str) {
         int size = str.length();
         writeInt(size);
-        for (byte bite : str.getBytes()) {
-            bytes.add(bite);
-        }
+        bytes.addAll(Bytes.asList(str.getBytes()));
     }
 
     public void writeByteArray(byte[] bites) {

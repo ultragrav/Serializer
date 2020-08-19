@@ -20,6 +20,7 @@ public class GravSerializer {
     private List<Byte> bytes = new ArrayList<>();
     private int reading = 0;
     private int mark = 0;
+    private int writeMark = 0;
 
     public GravSerializer() {
     }
@@ -61,6 +62,22 @@ public class GravSerializer {
      */
     public void mark() {
         mark = reading;
+    }
+
+    /**
+     * Marks this write position for a later writeReset
+     */
+    public void writeMark() {
+        writeMark = this.bytes.size();
+    }
+
+    /**
+     * Resets serializer's writing position to the last writeMark
+     */
+    public void writeReset() {
+        while(this.bytes.size() != writeMark) {
+            this.bytes.remove(this.bytes.size()-1);
+        }
     }
 
     /**

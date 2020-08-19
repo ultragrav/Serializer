@@ -211,6 +211,10 @@ public class GravSerializer {
         return reading < bytes.size();
     }
 
+    public void append(GravSerializer serializer) {
+        this.bytes.addAll(serializer.bytes);
+    }
+
     public void writeUUID(UUID id) {
         this.writeLong(id.getMostSignificantBits());
         this.writeLong(id.getLeastSignificantBits());

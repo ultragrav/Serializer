@@ -1,6 +1,7 @@
 package net.ultragrav.serializer;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Serializers {
     private static final List<SerializerElement> SERIALIZERS = new ArrayList<>();
@@ -104,7 +105,7 @@ public class Serializers {
             @Override
             public Map<?, ?> deserialize(GravSerializer serializer, Object... args) {
                 int size = serializer.readInt();
-                Map<Object, Object> map = new HashMap<>();
+                Map<Object, Object> map = new ConcurrentHashMap<>();
                 for (int i = 0; i < size; i++) {
                     Map.Entry<?, ?> entry = (Map.Entry<?, ?>) deserializeObject(serializer);
                     if (entry == null) {

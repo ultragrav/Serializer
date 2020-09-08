@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -48,8 +49,7 @@ public class GravSerializer {
     }
 
     public GravSerializer(String input) {
-        for (byte b : Base64.getDecoder().decode(input))
-            bytes.add(b);
+        this(Base64.getDecoder().decode(input));
     }
 
     public GravSerializer(byte[] input) {

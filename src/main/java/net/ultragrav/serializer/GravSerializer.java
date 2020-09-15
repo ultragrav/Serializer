@@ -173,7 +173,7 @@ public class GravSerializer {
     public short readShort() {
         byte b1 = this.readByte();
         byte b2 = this.readByte();
-        return (short) (b1 << 8 | b2);
+        return (short) (b2 << 8 | b1);
     }
 
     public boolean readBoolean() {

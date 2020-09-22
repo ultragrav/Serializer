@@ -53,7 +53,7 @@ public class GravSerializer {
     }
 
     public GravSerializer(byte[] input) {
-        bytes = Bytes.asList(input);
+        bytes.addAll(Bytes.asList(input));
     }
 
     /**
@@ -92,9 +92,9 @@ public class GravSerializer {
     }
 
     public void writeString(String str) {
-        int size = str.length();
-        writeInt(size);
-        bytes.addAll(Bytes.asList(str.getBytes()));
+        byte[] bts = str.getBytes();
+        writeInt(bts.length);
+        bytes.addAll(Bytes.asList(bts));
     }
 
     public void writeByteArray(byte[] bites) {

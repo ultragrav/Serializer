@@ -148,7 +148,7 @@ public class Serializers {
                 int size = serializer.readInt();
                 List<Object> l = new ArrayList<>();
                 for (int i = 0; i < size; i++) {
-                    l.add(deserializeObject(serializer));
+                    l.add(deserializeObject(serializer, args));
                 }
                 return l;
             }
@@ -269,7 +269,7 @@ public class Serializers {
             return null;
         }
         if (type > SERIALIZERS.size()) {
-            throw new IllegalArgumentException("Invalid object type: " + (type-1));
+            throw new IllegalArgumentException("No serializer found! Invalid object type: " + (type-1));
         }
         return SERIALIZERS.get(type - 1).getSerializer().deserialize(serializer, args);
     }

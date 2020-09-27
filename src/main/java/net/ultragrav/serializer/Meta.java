@@ -13,6 +13,8 @@ public class Meta implements GravSerializable {
         this.meta = meta;
     }
 
+    public Meta() {}
+
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
     /**

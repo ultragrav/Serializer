@@ -1,5 +1,8 @@
 package net.ultragrav.serializer;
 
+import com.google.common.annotations.Beta;
+import net.ultragrav.serializer.util.Json;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -142,5 +145,13 @@ public class Meta implements GravSerializable {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    public String asJson() {
+        return Json.make(meta).toString();
+    }
+
+    public static Meta fromJson(String json) {
+        return new Meta(Json.read(json).asMap());
     }
 }

@@ -8,17 +8,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 @SuppressWarnings("unchecked")
 public class GravSerializer {
-    private List<Byte> bytes = new ArrayList<>();
+    private byte[] bytes = new byte[16]; //Default 16 byte capacity
+    private int used = 0;
     private int reading = 0;
     private int mark = 0;
     private int writeMark = 0;
@@ -32,8 +30,9 @@ public class GravSerializer {
 
     public GravSerializer(InputStream is, Compressor compressor) throws IOException {
         int i;
+        ensureCapacity(is.available());
         while ((i = is.read()) != -1) {
-            bytes.add((byte) i);
+            writeByte((byte) i);
         }
         is.close();
         if (compressor != null) {
@@ -44,7 +43,8 @@ public class GravSerializer {
             } catch(DecompressionException e) {
                 output = StandardCompressor.instance.decompress(data);
             }
-            bytes = Bytes.asList(output);
+            bytes = output;
+            used = bytes.length;
         }
     }
 
@@ -53,7 +53,8 @@ public class GravSerializer {
     }
 
     public GravSerializer(byte[] input) {
-        bytes.addAll(Bytes.asList(input));
+        bytes = Arrays.copyOf(input, input.length);
+        used = bytes.length;
     }
 
     /**
@@ -68,16 +69,37 @@ public class GravSerializer {
      * Marks this write position for a later writeReset
      */
     public void writeMark() {
-        writeMark = this.bytes.size();
+        writeMark = used;
     }
 
     /**
      * Resets serializer's writing position to the last writeMark
      */
     public void writeReset() {
-        while(this.bytes.size() != writeMark) {
-            this.bytes.remove(this.bytes.size()-1);
+        while(this.used != writeMark) {
+            this.used = writeMark;
         }
+    }
+
+    private void append(byte[] arr) {
+        append(arr, arr.length);
+    }
+
+    private void append(byte[] arr, int size) {
+        ensureCapacity(used + size);
+        System.arraycopy(arr, 0, this.bytes, this.used, size);
+        this.used += size;
+    }
+
+    private void ensureCapacity(int capacity) {
+        if(this.bytes.length >= capacity)
+            return;
+
+        int oldCapacity = this.bytes.length;
+        int newCapacity = Math.max(oldCapacity + (oldCapacity >> 1), capacity); // max(old + (old/2), cap)
+        byte[] b = new byte[newCapacity];
+        System.arraycopy(this.bytes, 0, b, 0, this.used);
+        this.bytes = b;
     }
 
     /**
@@ -88,19 +110,25 @@ public class GravSerializer {
     }
 
     public int size() {
-        return this.bytes.size();
+        return this.used;
+    }
+
+    public int trueSize() {
+        return this.bytes.length;
     }
 
     public void writeString(String str) {
         byte[] bts = str.getBytes();
+        ensureCapacity(used + bts.length + 4);
         writeInt(bts.length);
-        bytes.addAll(Bytes.asList(bts));
+        append(bts);
     }
 
     public void writeByteArray(byte[] bites) {
         int size = bites.length;
+        ensureCapacity(used + size + 4);
         writeInt(size);
-        this.bytes.addAll(Bytes.asList(bites));
+        append(bites);
     }
 
     public void writeShort(short value) {
@@ -109,22 +137,23 @@ public class GravSerializer {
     }
 
     public void writeByte(byte bite) {
-        this.bytes.add(bite);
+        ensureCapacity(used + 1);
+        this.bytes[used++] = bite;
     }
 
     /**
      * Returns the amount of remaining bytes
      */
     public int getRemaining() {
-        return this.bytes.size() - this.reading;
+        return this.used - this.reading;
     }
 
     public void writeLong(long l) {
-        List<Byte> bites = new ArrayList<>();
+        byte[] bites = new byte[8];
         for (int i = 0; i < 8; i++) { //8 bytes in a long
-            bites.add((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
+            bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
         }
-        bytes.addAll(bites);
+        append(bites);
     }
 
     public void writeDouble(double d) {
@@ -136,10 +165,10 @@ public class GravSerializer {
     }
 
     public void writeInt(int i) {
-        List<Byte> bites = new ArrayList<>();
+        byte[] bites = new byte[4];
         for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
-            bites.add((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
-        bytes.addAll(bites);
+            bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
+        append(bites);
     }
 
     public void writeBoolean(boolean bool) {
@@ -198,20 +227,21 @@ public class GravSerializer {
     }
 
     public byte readByte() {
-        if (reading >= bytes.size())
+        if (reading >= used)
             throw new IllegalStateException("End of byte array reached (GravSerializer)");
-        return bytes.get(reading++);
+        return bytes[reading++];
     }
 
     public boolean hasNext() {
-        return reading < bytes.size();
+        return reading < used;
     }
 
     public void append(GravSerializer serializer) {
-        this.bytes.addAll(serializer.bytes);
+        append(serializer.bytes, serializer.used);
     }
 
     public void writeUUID(UUID id) {
+        ensureCapacity(used + 16);
         this.writeLong(id.getMostSignificantBits());
         this.writeLong(id.getLeastSignificantBits());
     }
@@ -238,15 +268,11 @@ public class GravSerializer {
     }
 
     public String toString() {
-        byte[] bites = new byte[bytes.size()];
-        for (int i = 0; i < bytes.size(); i++) {
-            bites[i] = bytes.get(i);
-        }
-        return Base64.getEncoder().encodeToString(bites);
+        return Base64.getEncoder().encodeToString(toByteArray());
     }
 
     public byte[] toByteArray() {
-        return Bytes.toArray(bytes);
+        return Arrays.copyOf(bytes, used);
     }
 
     public void writeToStream(OutputStream stream) throws IOException {

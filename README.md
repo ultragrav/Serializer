@@ -30,7 +30,7 @@ class Examples {
                 out2.createNewFile();
             }
 
-            serializer.writeToStream(new FileOutputStream(out2));
+            serializer.writeToStream(new FileOutputStream(out2), <Compressor>);
         } catch(IOException e) {
             e.printStackTrace();
         }

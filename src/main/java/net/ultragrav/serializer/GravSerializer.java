@@ -81,11 +81,15 @@ public class GravSerializer {
         }
     }
 
-    private void append(byte[] arr) {
+    public void append(byte[] arr) {
         append(arr, arr.length);
     }
 
-    private void append(byte[] arr, int size) {
+    public void append(byte[] arr, int size) {
+
+        if(size > arr.length)
+            throw new IllegalArgumentException("Size cannot be larger than array size!");
+
         ensureCapacity(used + size);
         System.arraycopy(arr, 0, this.bytes, this.used, size);
         this.used += size;

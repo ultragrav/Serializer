@@ -1,5 +1,5 @@
 # Serializer
-A simple but versatile serialization system
+A simple but versatile serialization system to convert objects and primitives into byte arrays or files.
 
 ## Installation
 Currently this project does not have a maven repository
@@ -30,7 +30,7 @@ class Examples {
                 out2.createNewFile();
             }
 
-            serializer.writeToStream(new FileOutputStream(out2));
+            serializer.writeToStream(new FileOutputStream(out2), <Compressor>);
         } catch(IOException e) {
             e.printStackTrace();
         }

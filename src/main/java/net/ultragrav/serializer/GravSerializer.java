@@ -1,17 +1,14 @@
 package net.ultragrav.serializer;
 
-import com.google.common.primitives.Bytes;
 import net.ultragrav.serializer.compressors.StandardCompressor;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Random;
+import java.util.UUID;
 
 @SuppressWarnings("unchecked")
 public class GravSerializer {
@@ -40,7 +37,7 @@ public class GravSerializer {
             byte[] output;
             try {
                 output = compressor.decompress(data);
-            } catch(DecompressionException e) {
+            } catch (DecompressionException e) {
                 output = StandardCompressor.instance.decompress(data);
             }
             bytes = output;
@@ -76,7 +73,7 @@ public class GravSerializer {
      * Resets serializer's writing position to the last writeMark
      */
     public void writeReset() {
-        while(this.used != writeMark) {
+        while (this.used != writeMark) {
             this.used = writeMark;
         }
     }
@@ -92,7 +89,7 @@ public class GravSerializer {
     }
 
     private void ensureCapacity(int capacity) {
-        if(this.bytes.length >= capacity)
+        if (this.bytes.length >= capacity)
             return;
 
         int oldCapacity = this.bytes.length;
@@ -173,6 +170,65 @@ public class GravSerializer {
 
     public void writeBoolean(boolean bool) {
         this.writeByte((byte) (bool ? 1 : 0));
+    }
+
+    public void writeBooleanArray(boolean... bools) {
+        int len = bools.length >> 3;
+        byte rem = (byte) (bools.length % 8);
+
+        byte[] ret = new byte[len + (rem > 0 ? 1 : 0)];
+
+        for (int i = 0; i < len; i ++) {
+            byte b = 0;
+            for (byte j = 0; j < 8; j ++) {
+                if (bools[i << 3 | j]) {
+                    b |= 1;
+                }
+                if (j == 7)
+                    break;
+                b <<= 1;
+            }
+            ret[i] = b;
+        }
+        if (rem > 0) {
+            byte b = 0;
+            for (byte j = 0; j < rem; j ++) {
+                if (bools[len << 3 | j]) {
+                    b |= 1;
+                }
+                b <<= 1;
+            }
+            ret[len] = b;
+        }
+
+        writeByte(rem);
+        writeByteArray(ret);
+    }
+
+    public boolean[] readBooleanArray() {
+        byte rem = readByte();
+        byte[] dat = readByteArray();
+        int len = dat.length - (rem > 0 ? 1 : 0);
+
+        boolean[] ret = new boolean[len << 3 | rem];
+
+        for (int i = 0; i < len; i ++) {
+            byte b = dat[i];
+            for (int j = 0; j < 8; j ++) {
+                ret[i << 3 | j] = ((b >>> 7) & 1) == 1;
+                b <<= 1;
+            }
+        }
+        if (rem > 0) {
+            byte b = dat[len];
+            b <<= (7 - rem);
+            for (int j = 0; j < rem; j ++) {
+                ret[len << 3 | j] = ((b >>> 7) & 1) == 1;
+                b <<= 1;
+            }
+        }
+
+        return ret;
     }
 
     public void writeObject(Object o) {

@@ -245,6 +245,18 @@ public class Serializers {
                 return serializer.readBoolean();
             }
         }));
+        // 15
+        SERIALIZERS.add(new SerializerElement(boolean[].class, new Serializer<boolean[]>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeBooleanArray((boolean[]) t);
+            }
+
+            @Override
+            public boolean[] deserialize(GravSerializer serializer, Object... args) {
+                return serializer.readBooleanArray();
+            }
+        }));
     }
 
     public static void serializeObject(GravSerializer serializer, Object obj) {

@@ -46,7 +46,8 @@ public class Meta implements GravSerializable {
     }
 
     public Meta getMeta(String key) {
-        return new Meta(this.<Map<String, Object>>getObject(key));
+        Map<String, Object> data = this.getObject(key);
+        return data == null ? null : new Meta(data);
     }
 
     public void set(String key, Object object) {

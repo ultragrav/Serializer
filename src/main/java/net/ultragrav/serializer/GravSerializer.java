@@ -134,7 +134,7 @@ public class GravSerializer {
 
     public void writeShort(short value) {
         this.writeByte((byte) (value & 0xFF));
-        this.writeByte((byte) ((value & 0xFF00) >>> 8));
+        this.writeByte((byte) (value >>> 8));
     }
 
     public void writeByte(byte bite) {
@@ -262,7 +262,7 @@ public class GravSerializer {
     public short readShort() {
         byte b1 = this.readByte();
         byte b2 = this.readByte();
-        return (short) (b2 << 8 | b1);
+        return (short) (b2 << 8 | (b1 & 0xFF));
     }
 
     public boolean readBoolean() {

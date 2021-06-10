@@ -12,7 +12,7 @@ public class ZstdCompressor implements Compressor {
     private ZstdCompressor() {
     }
 
-    public byte[] compress(byte[] in) {
+    public synchronized byte[] compress(byte[] in) {
         int len = in.length;
         byte[] out = Zstd.compress(in);
         byte[] lenB = new byte[4];
@@ -21,7 +21,7 @@ public class ZstdCompressor implements Compressor {
         return ArrayUtils.join(lenB, out);
     }
 
-    public byte[] decompress(byte[] in) throws DecompressionException {
+    public synchronized byte[] decompress(byte[] in) throws DecompressionException {
         if(in.length < 4) {
             return in;
         }

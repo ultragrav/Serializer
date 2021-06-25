@@ -353,25 +353,4 @@ public class GravSerializer {
         stream.flush();
         stream.close();
     }
-
-    public static void main(String[] args) {
-        Random rand = new Random();
-        boolean[] bools = new boolean[1000000];
-        for (int i = 0; i < bools.length; i ++) {
-            bools[i] = rand.nextBoolean();
-        }
-
-        GravSerializer ser = new GravSerializer();
-        long before = System.nanoTime();
-        ser.writeBooleanArray(bools);
-        long after = System.nanoTime();
-        System.out.println(after - before);
-        ser = new GravSerializer();
-        before = System.nanoTime();
-        for (int i = 0; i < bools.length; i ++) {
-            ser.writeBoolean(bools[i]);
-        }
-        after = System.nanoTime();
-        System.out.println(after - before);
-    }
 }

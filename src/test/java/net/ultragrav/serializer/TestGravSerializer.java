@@ -42,6 +42,21 @@ public class TestGravSerializer {
     }
 
     @Test
+    public void testBooleanArrays() {
+        Random rand = new Random();
+        boolean[] bools = new boolean[1000000];
+        for (int i = 0; i < bools.length; i ++) {
+            bools[i] = rand.nextBoolean();
+        }
+
+        GravSerializer ser = new GravSerializer();
+        ser.writeBooleanArray(bools);
+
+        boolean[] res = ser.readBooleanArray();
+        assert Arrays.equals(bools, res);
+    }
+
+    @Test
     public void testIO() throws IOException {
         byte[] bt = createRandomBytes(10000);
 

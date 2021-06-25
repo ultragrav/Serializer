@@ -1,10 +1,11 @@
 package net.ultragrav.serializer;
 
+import com.github.luben.zstd.Zstd;
 import net.ultragrav.serializer.compressors.StandardCompressor;
+import sun.misc.Unsafe;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
@@ -84,7 +85,7 @@ public class GravSerializer {
 
     public void append(byte[] arr, int size) {
 
-        if(size > arr.length)
+        if (size > arr.length)
             throw new IllegalArgumentException("Size cannot be larger than array size!");
 
         ensureCapacity(used + size);
@@ -182,9 +183,9 @@ public class GravSerializer {
 
         byte[] ret = new byte[len + (rem > 0 ? 1 : 0)];
 
-        for (int i = 0; i < len; i ++) {
+        for (int i = 0; i < len; i++) {
             byte b = 0;
-            for (byte j = 0; j < 8; j ++) {
+            for (byte j = 0; j < 8; j++) {
                 if (bools[i << 3 | j]) {
                     b |= 1;
                 }
@@ -196,7 +197,7 @@ public class GravSerializer {
         }
         if (rem > 0) {
             byte b = 0;
-            for (byte j = 0; j < rem; j ++) {
+            for (byte j = 0; j < rem; j++) {
                 if (bools[len << 3 | j]) {
                     b |= 1;
                 }
@@ -216,9 +217,9 @@ public class GravSerializer {
 
         boolean[] ret = new boolean[len << 3 | rem];
 
-        for (int i = 0; i < len; i ++) {
+        for (int i = 0; i < len; i++) {
             byte b = dat[i];
-            for (int j = 0; j < 8; j ++) {
+            for (int j = 0; j < 8; j++) {
                 ret[i << 3 | j] = ((b >>> 7) & 1) == 1;
                 b <<= 1;
             }
@@ -226,7 +227,7 @@ public class GravSerializer {
         if (rem > 0) {
             byte b = dat[len];
             b <<= (7 - rem);
-            for (int j = 0; j < rem; j ++) {
+            for (int j = 0; j < rem; j++) {
                 ret[len << 3 | j] = ((b >>> 7) & 1) == 1;
                 b <<= 1;
             }
@@ -351,5 +352,26 @@ public class GravSerializer {
         }
         stream.flush();
         stream.close();
+    }
+
+    public static void main(String[] args) {
+        Random rand = new Random();
+        boolean[] bools = new boolean[1000000];
+        for (int i = 0; i < bools.length; i ++) {
+            bools[i] = rand.nextBoolean();
+        }
+
+        GravSerializer ser = new GravSerializer();
+        long before = System.nanoTime();
+        ser.writeBooleanArray(bools);
+        long after = System.nanoTime();
+        System.out.println(after - before);
+        ser = new GravSerializer();
+        before = System.nanoTime();
+        for (int i = 0; i < bools.length; i ++) {
+            ser.writeBoolean(bools[i]);
+        }
+        after = System.nanoTime();
+        System.out.println(after - before);
     }
 }

@@ -54,6 +54,30 @@ public class Meta implements GravSerializable {
         return data == null ? null : new Meta(data);
     }
 
+    public Meta getOrSetMeta(String key, Meta defaultValue) {
+        //Read lock is less expensive, so try first
+        lock.readLock().lock();
+        try {
+            Meta meta = getMeta(key);
+            if(meta != null)
+                return meta;
+        } finally {
+            lock.readLock().unlock();
+        }
+
+        lock.writeLock().lock();
+        try {
+            Meta meta = getMeta(key);
+            if (meta == null) {
+                set(key, defaultValue);
+                return defaultValue;
+            }
+            return meta;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
     public void set(String key, Object object) {
         lock.writeLock().lock();
         try {

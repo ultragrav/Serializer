@@ -3,6 +3,7 @@ package net.ultragrav.serializer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 //TODO make thread-safe
 public class JsonMeta implements GravSerializable {
@@ -23,6 +24,10 @@ public class JsonMeta implements GravSerializable {
 
     public JsonMetaUpdateRecord getRecord() {
         return record;
+    }
+
+    public Set<String> getKeys() {
+        return this.data.keySet();
     }
 
     public <T> T get(String path) {

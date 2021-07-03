@@ -1,8 +1,11 @@
 package net.ultragrav.serializer;
 
+import lombok.val;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 //TODO make thread-safe
 public class JsonMeta implements GravSerializable {
@@ -25,6 +28,10 @@ public class JsonMeta implements GravSerializable {
         return record;
     }
 
+    public Set<String> getKeys() {
+        return this.data.keySet();
+    }
+
     public <T> T get(String path) {
         return get(path.split(delimiter));
     }
@@ -43,6 +50,13 @@ public class JsonMeta implements GravSerializable {
             }
         }
         return (T) current;
+    }
+
+    public <T> T getOrSet(String path, T defaultValue) {
+        T obj = get(path);
+        if(obj == null)
+            set(path, defaultValue);
+        return defaultValue;
     }
 
     public void set(String path, Object value) {
@@ -126,6 +140,19 @@ public class JsonMeta implements GravSerializable {
         return builder.append(indent).append("}").toString();
     }
 
+    public JsonMeta reduce() {
+        JsonMeta meta = new JsonMeta();
+        for (String updatedField : record.updatedFields) {
+            Object val = get(updatedField);
+            if(val instanceof JsonMeta && ((JsonMeta) val).parent == this) {
+                meta.data.put(updatedField, ((JsonMeta) val).reduce());
+            } else {
+                meta.data.put(updatedField, val);
+            }
+        }
+        return meta;
+    }
+
     @Override
     public void serialize(GravSerializer serializer) {
         serialize(serializer, false);
@@ -194,12 +221,7 @@ public class JsonMeta implements GravSerializable {
         meta.getRecord().clear();
 
         meta.set("hey.one.two.three.num", 3);
-        GravSerializer serializer = new GravSerializer();
-        meta.serialize(serializer, true);
-
-        System.out.println(serializer.size());
-
-        meta = JsonMeta.deserialize(serializer);
+        meta = meta.reduce();
         System.out.println(meta);
     }
 }

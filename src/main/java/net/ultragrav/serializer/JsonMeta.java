@@ -50,6 +50,13 @@ public class JsonMeta implements GravSerializable {
         return (T) current;
     }
 
+    public <T> T getOrSet(String path, T defaultValue) {
+        T obj = get(path);
+        if(obj == null)
+            set(path, defaultValue);
+        return defaultValue;
+    }
+
     public void set(String path, Object value) {
         set(path.split(delimiter), value);
     }

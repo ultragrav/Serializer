@@ -53,6 +53,10 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
+    public ReentrantLock getLock() {
+        return lock;
+    }
+
     public <T> T get(String path) {
         return get(path.split(delimiter));
     }
@@ -94,7 +98,11 @@ public class JsonMeta implements GravSerializable {
         set(path.split(delimiter), value);
     }
 
-    public void set(String[] path, Object value) { //Doesn't use recursion, may change later
+    public void set(String[] path, Object value) {
+        set(path, value, true);
+    }
+
+    public void set(String[] path, Object value, boolean markDirty) { //Doesn't use recursion, may change later
         lock.lock();
         try {
             JsonMeta current = this;
@@ -103,8 +111,11 @@ public class JsonMeta implements GravSerializable {
                 Object o = current.data.get(s);
 
                 if (i == pathLength - 1) {
+
                     Object prev = current.data.put(s, value);
-                    current.markDirty(s);
+                    if (markDirty) {
+                        current.markDirty(s);
+                    }
 
                     if (value instanceof Map) {
                         value = new JsonMeta((Map<String, Object>) value);
@@ -116,13 +127,15 @@ public class JsonMeta implements GravSerializable {
                     //Link it if it's a JsonMeta
                     if (value instanceof JsonMeta) {
                         JsonMeta v = (JsonMeta) value;
-                        v.getRecord().clear();
                         link(current, v, s);
 
-                        if (prev instanceof JsonMeta) {
-                            v.markDirtyDiff((JsonMeta) prev);
-                        } else {
-                            v.markDirtyRecursive();
+                        if (markDirty) {
+                            v.getRecord().clear();
+                            if (prev instanceof JsonMeta) {
+                                v.markDirtyDiff((JsonMeta) prev);
+                            } else {
+                                v.markDirtyRecursive();
+                            }
                         }
                     }
 
@@ -148,13 +161,34 @@ public class JsonMeta implements GravSerializable {
     }
 
     /**
+     * Take everything from the supplied meta and merge it into this meta, replacing identical keys
+     */
+    public void putAll(JsonMeta meta) {
+        lock.lock();
+        try {
+            for (String key : meta.getKeys()) {
+                Object next = meta.get(new String[]{key});
+                Object current = this.get(new String[]{key});
+
+                if (next instanceof JsonMeta && current instanceof JsonMeta) {
+                    ((JsonMeta) current).putAll((JsonMeta) next);
+                } else {
+                    set(key, next);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * @param valName The last entry in the path that the child should inherit eg. adding meta A to B at apple.dog the last entry would be dog
      */
     private static void link(JsonMeta parent, JsonMeta child, String valName) {
 
         //Compute current path
-        String[] currentPath = Arrays.copyOf(parent.path, parent.path.length+1);
-        currentPath[currentPath.length-1] = valName;
+        String[] currentPath = Arrays.copyOf(parent.path, parent.path.length + 1);
+        currentPath[currentPath.length - 1] = valName;
 
         // Must lock with child's lock, because if the child's lock is already held while we set the child's lock to a new one,
         // then the holder won't be able to unlock the previous lock
@@ -292,7 +326,7 @@ public class JsonMeta implements GravSerializable {
     public void serialize(GravSerializer serializer, boolean reduced) {
         lock.lock();
         try {
-            int len = reduced ? record.getUpdatedFields().size() : this.data.size();
+            int len = reduced ? record.updatedFields.size() : this.data.size();
 
             serializer.writeBoolean(reduced); //Probably not needed but who cares about an extra couple bytes
             serializer.writeInt(len);
@@ -352,6 +386,8 @@ public class JsonMeta implements GravSerializable {
     public static void main(String[] args) {
         JsonMeta meta = new JsonMeta();
         meta.set("hey.one.two.three.num", 1);
+        meta.set("hey.one.two.three.abc", 1);
+
         meta.set("hey.one.two.four.num", 2);
         meta.set("hey.one.two.oof.yo", 2);
         System.out.println(meta);
@@ -360,12 +396,10 @@ public class JsonMeta implements GravSerializable {
         meta.getRecord().clear();
 
         JsonMeta test = new JsonMeta();
-        test.set("yo", 2);
-        test.set("dude", "hi");
-        meta.set("hey.one.two.oof", test);
+        test.set("hey.one.two.three.num", 23);
+        test.set("hey.one.two.three.dude", "hi");
+        meta.putAll(test);
 
-        meta.set("hey.one.two.three.num", 3);
-        meta = meta.reduce();
         System.out.println(meta);
     }
 }

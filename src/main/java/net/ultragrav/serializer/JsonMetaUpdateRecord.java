@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class JsonMetaUpdateRecord {
-    private Set<String> updatedFields = new HashSet<>();
+    protected Set<String> updatedFields = new HashSet<>();
     public Set<JsonMetaUpdateRecord> children = new HashSet<>();
     public List<Consumer<String>> listeners = new ArrayList<>();
 
@@ -16,8 +16,8 @@ public class JsonMetaUpdateRecord {
         return updatedFields.add(key);
     }
 
-    public Set<String> getUpdatedFields() {
-        return updatedFields;
+    public List<String> getUpdatedFields() {
+        return new ArrayList<>(updatedFields);
     }
 
     public void clear() {

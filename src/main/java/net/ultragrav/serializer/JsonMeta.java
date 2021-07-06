@@ -346,7 +346,6 @@ public class JsonMeta implements GravSerializable {
         JsonMeta test = new JsonMeta();
         test.set("yo", 2);
         test.set("dude", "hi");
-
         meta.set("hey.one.two.oof", test);
 
         meta.set("hey.one.two.three.num", 3);

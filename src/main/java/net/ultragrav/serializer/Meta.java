@@ -176,6 +176,17 @@ public class Meta implements GravSerializable {
         }
     }
 
+    /**
+     * Get a copy of this meta's internal data
+     *
+     * Note: This does not contain any objects that failed deserialization during the initialization
+     *
+     * @return Copy of the internal data
+     */
+    public Map<String, Object> asMap() {
+        return new HashMap<>(meta);
+    }
+
     public String asJson() {
         return Json.make(meta).toString();
     }

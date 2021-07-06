@@ -88,6 +88,11 @@ public class JsonMeta implements GravSerializable {
                     current.markDirty(s);
 
                     //Link it if it's a JsonMeta
+                    if (value instanceof Meta) {
+                        Map<String, Object> oldData = ((Meta) value).asMap();
+                        value = new JsonMeta();
+                        ((JsonMeta) value).data.putAll(oldData);
+                    }
                     if (value instanceof JsonMeta) {
                         JsonMeta v = (JsonMeta) value;
                         v.getRecord().clear();

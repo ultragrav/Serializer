@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 //TODO make thread-safe
 public class JsonMeta implements GravSerializable {
@@ -15,6 +17,9 @@ public class JsonMeta implements GravSerializable {
     private String delimiter = "\\.";
     private String[] path = new String[0];
     private JsonMeta parent = null;
+
+    private ReentrantLock lock = new ReentrantLock();
+
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
     public JsonMeta() {
@@ -37,26 +42,36 @@ public class JsonMeta implements GravSerializable {
     }
 
     public <T> T get(String... path) {
-        JsonMeta current = this;
-        for (int i = 0, pathLength = path.length; i < pathLength; i++) {
-            String s = path[i];
-            Object o = current.data.get(s);
-            if (o instanceof JsonMeta) {
-                current = (JsonMeta) o;
-            } else {
-                if (i != path.length - 1)
-                    return null;
-                return (T) o;
+        lock.lock();
+        try {
+            JsonMeta current = this;
+            for (int i = 0, pathLength = path.length; i < pathLength; i++) {
+                String s = path[i];
+                Object o = current.data.get(s);
+                if (o instanceof JsonMeta) {
+                    current = (JsonMeta) o;
+                } else {
+                    if (i != path.length - 1)
+                        return null;
+                    return (T) o;
+                }
             }
+            return (T) current;
+        } finally {
+            lock.unlock();
         }
-        return (T) current;
     }
 
     public <T> T getOrSet(String path, T defaultValue) {
-        T obj = get(path);
-        if(obj == null)
-            set(path, defaultValue);
-        return defaultValue;
+        lock.lock();
+        try {
+            T obj = get(path);
+            if (obj == null)
+                set(path, defaultValue);
+            return defaultValue;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void set(String path, Object value) {
@@ -64,38 +79,64 @@ public class JsonMeta implements GravSerializable {
     }
 
     public void set(String[] path, Object value) { //Doesn't use recursion, may change later
-        JsonMeta current = this;
-        for (int i = 0, pathLength = path.length; i < pathLength; i++) {
-            String s = path[i];
-            Object o = current.data.get(s);
+        lock.lock();
+        try {
+            JsonMeta current = this;
+            for (int i = 0, pathLength = path.length; i < pathLength; i++) {
+                String s = path[i];
+                Object o = current.data.get(s);
 
-            if (i == pathLength - 1) {
-                current.data.put(s, value);
-                current.markDirty(s);
-                return;
+                if (i == pathLength - 1) {
+
+                    current.data.put(s, value);
+                    current.markDirty(s);
+
+                    //Link it if it's a JsonMeta
+                    if (value instanceof JsonMeta) {
+                        JsonMeta v = (JsonMeta) value;
+                        link(current, v, s);
+                    }
+
+                    return;
+                }
+
+                if (!(o instanceof JsonMeta)) {
+                    //Create new json meta at specific path
+                    JsonMeta next = new JsonMeta(delimiter);
+
+                    link(current, next, path[i]);
+
+                    //Put the next JsonMeta
+                    current.data.put(s, next);
+                    current = next;
+                } else {
+                    current = (JsonMeta) o;
+                }
             }
-
-            if (!(o instanceof JsonMeta)) {
-                //Create new json meta at specific path
-                JsonMeta next = new JsonMeta(delimiter);
-
-                //Compute current path
-                String[] currentPath = new String[i + 1 + this.path.length];
-                System.arraycopy(this.path, 0, currentPath, 0, this.path.length);
-                System.arraycopy(path, 0, currentPath, this.path.length, i + 1);
-
-                next.path = currentPath;
-                next.parent = current;
-
-                current.record.children.add(next.record);
-
-                current.data.put(s, next);
-                current.markDirty(s);
-                current = next;
-            } else {
-                current = (JsonMeta) o;
-            }
+        } finally {
+            lock.unlock();
         }
+    }
+
+    /**
+     * @param valName The last entry in the path that the child should inherit eg. adding meta A to B at apple.dog the last entry would be dog
+     */
+    private static void link(JsonMeta parent, JsonMeta child, String valName) {
+
+        //Compute current path
+        String[] currentPath = Arrays.copyOf(parent.path, parent.path.length+1);
+        currentPath[currentPath.length-1] = valName;
+
+        //Set paths
+        child.path = currentPath;
+        child.parent = parent;
+
+        //Set lock
+        child.lock = parent.lock;
+
+        //Set record's children
+        parent.record.children.add(child.record);
+
     }
 
     private void markDirty(String key) {
@@ -141,16 +182,25 @@ public class JsonMeta implements GravSerializable {
     }
 
     public JsonMeta reduce() {
-        JsonMeta meta = new JsonMeta();
-        for (String updatedField : record.updatedFields) {
-            Object val = get(updatedField);
-            if(val instanceof JsonMeta && ((JsonMeta) val).parent == this) {
-                meta.data.put(updatedField, ((JsonMeta) val).reduce());
-            } else {
-                meta.data.put(updatedField, val);
+        lock.lock();
+        try {
+            JsonMeta meta = new JsonMeta();
+
+            //Iterate through updated fields
+            for (String updatedField : record.updatedFields) {
+                Object val = get(updatedField);
+
+                //Check if it's a JsonMeta with it's parent as us
+                if (val instanceof JsonMeta && ((JsonMeta) val).parent == this) {
+                    meta.data.put(updatedField, ((JsonMeta) val).reduce());
+                } else {
+                    meta.data.put(updatedField, val);
+                }
             }
+            return meta;
+        } finally {
+            lock.unlock();
         }
-        return meta;
     }
 
     @Override

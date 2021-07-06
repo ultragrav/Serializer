@@ -22,6 +22,23 @@ public class JsonMeta implements GravSerializable {
     public JsonMeta() {
     }
 
+    @SuppressWarnings("unchecked")
+    public JsonMeta(Map<String, Object> map) {
+        for (Map.Entry<String, Object> ent : map.entrySet()) {
+            Object val = ent.getValue();
+            if (val instanceof Map) {
+                val = new JsonMeta((Map<String, Object>) val);
+            }
+            if (val instanceof Meta) {
+                val = new JsonMeta(((Meta) val).asMap());
+            }
+            if (val instanceof JsonMeta) {
+                link(this, (JsonMeta) val, ent.getKey());
+            }
+            data.put(ent.getKey(), val);
+        }
+    }
+
     public JsonMeta(String delimiter) {
         this.delimiter = delimiter;
     }
@@ -87,12 +104,14 @@ public class JsonMeta implements GravSerializable {
                     Object prev = current.data.put(s, value);
                     current.markDirty(s);
 
-                    //Link it if it's a JsonMeta
-                    if (value instanceof Meta) {
-                        Map<String, Object> oldData = ((Meta) value).asMap();
-                        value = new JsonMeta();
-                        ((JsonMeta) value).data.putAll(oldData);
+                    if (value instanceof Map) {
+                        value = new JsonMeta((Map<String, Object>) value);
                     }
+                    if (value instanceof Meta) {
+                        value = new JsonMeta(((Meta) value).asMap());
+                    }
+
+                    //Link it if it's a JsonMeta
                     if (value instanceof JsonMeta) {
                         JsonMeta v = (JsonMeta) value;
                         v.getRecord().clear();

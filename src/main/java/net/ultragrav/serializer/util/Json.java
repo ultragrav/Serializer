@@ -25,19 +25,7 @@ import java.net.URI;
 import java.net.URL;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-//import java.util.function.Function;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -176,7 +164,7 @@ public class Json implements java.io.Serializable, Iterable<Json> {
      * found at http://json-schema.org. JSON Schema is an  IETF draft (v4 currently) and
      * our implementation follows this set of specifications. A JSON schema is specified
      * as a JSON object that contains keywords defined by the specification. Here are
-     *  few introductory materials:
+     * few introductory materials:
      * <ul>
      * <li>http://jsonary.com/documentation/json-schema/ -
      * a very well-written tutorial covering the whole standard</li>
@@ -2724,12 +2712,12 @@ public class Json implements java.io.Serializable, Iterable<Json> {
     }
 
     private static class Reader {
-        private static final Object OBJECT_END = new String("}");
-        private static final Object ARRAY_END = new String("]");
-        private static final Object OBJECT_START = new String("{");
-        private static final Object ARRAY_START = new String("[");
-        private static final Object COLON = new String(":");
-        private static final Object COMMA = new String(",");
+        private static final Object OBJECT_END = "}";
+        private static final Object ARRAY_END = "]";
+        private static final Object OBJECT_START = "{";
+        private static final Object ARRAY_START = "[";
+        private static final Object COLON = ":";
+        private static final Object COMMA = ",";
         private static final HashSet<Object> PUNCTUATION = new HashSet<Object>(
                 Arrays.asList(OBJECT_END, OBJECT_START, ARRAY_END, ARRAY_START, COLON, COMMA));
         public static final int FIRST = 0;

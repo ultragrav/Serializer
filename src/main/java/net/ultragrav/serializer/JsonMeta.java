@@ -2,10 +2,7 @@ package net.ultragrav.serializer;
 
 import lombok.val;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -87,14 +84,20 @@ public class JsonMeta implements GravSerializable {
                 Object o = current.data.get(s);
 
                 if (i == pathLength - 1) {
-
-                    current.data.put(s, value);
+                    Object prev = current.data.put(s, value);
                     current.markDirty(s);
 
                     //Link it if it's a JsonMeta
                     if (value instanceof JsonMeta) {
                         JsonMeta v = (JsonMeta) value;
+                        v.getRecord().clear();
                         link(current, v, s);
+
+                        if (prev instanceof JsonMeta) {
+                            v.markDirtyDiff((JsonMeta) prev);
+                        } else {
+                            v.markDirtyRecursive();
+                        }
                     }
 
                     return;
@@ -142,7 +145,47 @@ public class JsonMeta implements GravSerializable {
     private void markDirty(String key) {
         record.updatedFields.add(key);
         if (parent != null) {
-            if(path.length == 0) throw new IllegalStateException("This shouldn't happen.");
+            if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
+            parent.markDirty(path[path.length - 1]);
+        }
+    }
+
+    private void markDirtyRecursive() {
+        for (Map.Entry<String, Object> ent : data.entrySet()) {
+            record.updatedFields.add(ent.getKey());
+            if (ent.getValue() instanceof JsonMeta) {
+                ((JsonMeta) ent.getValue()).markDirtyRecursive();
+            }
+        }
+        if (parent != null) {
+            if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
+            parent.markDirty(path[path.length - 1]);
+        }
+    }
+
+    private void markDirtyDiff(JsonMeta other) {
+        boolean changed = false;
+        for (Map.Entry<String, Object> ent : data.entrySet()) {
+            if (!other.data.containsKey(ent.getKey())) {
+                record.updatedFields.add(ent.getKey());
+                changed = true;
+                continue;
+            }
+
+            if (ent.getValue() instanceof JsonMeta) {
+                if (!(other.data.get(ent.getKey()) instanceof JsonMeta)) {
+                    record.updatedFields.add(ent.getKey());
+                    changed = true;
+                } else {
+                    ((JsonMeta) ent.getValue()).markDirtyDiff((JsonMeta) other.data.get(ent.getKey()));
+                }
+            } else if (!Objects.equals(ent.getValue(), other.data.get(ent.getKey()))) {
+                record.updatedFields.add(ent.getKey());
+                changed = true;
+            }
+        }
+        if (parent != null && changed) {
+            if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
             parent.markDirty(path[path.length - 1]);
         }
     }
@@ -174,7 +217,7 @@ public class JsonMeta implements GravSerializable {
         builder.append("{").append("\n");
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             Object val = entry.getValue();
-            String valStr = val instanceof JsonMeta ? ((JsonMeta) val).recursiveToString(indentation+1) : val.toString();
+            String valStr = val instanceof JsonMeta ? ((JsonMeta) val).recursiveToString(indentation + 1) : val.toString();
             builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
         }
 
@@ -241,7 +284,6 @@ public class JsonMeta implements GravSerializable {
     }
 
     public static JsonMeta deserialize(GravSerializer serializer) {
-
         JsonMeta meta = new JsonMeta();
 
         boolean reduced = serializer.readBoolean();
@@ -251,7 +293,7 @@ public class JsonMeta implements GravSerializable {
             byte type = serializer.readByte();
             String key = serializer.readString();
             Object object;
-            if(type == 0) {
+            if (type == 0) {
                 object = JsonMeta.deserialize(serializer);
             } else {
                 object = serializer.readObject();
@@ -266,9 +308,16 @@ public class JsonMeta implements GravSerializable {
         JsonMeta meta = new JsonMeta();
         meta.set("hey.one.two.three.num", 1);
         meta.set("hey.one.two.four.num", 2);
+        meta.set("hey.one.two.oof.yo", 2);
         System.out.println(meta);
 
         meta.getRecord().clear();
+
+        JsonMeta test = new JsonMeta();
+        test.set("yo", 2);
+        test.set("dude", "hi");
+
+        meta.set("hey.one.two.oof", test);
 
         meta.set("hey.one.two.three.num", 3);
         meta = meta.reduce();

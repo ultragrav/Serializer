@@ -15,7 +15,7 @@ public class JsonMeta implements GravSerializable {
     private String[] path = new String[0];
     private JsonMeta parent = null;
 
-    private ReentrantLock lock = new ReentrantLock();
+    private volatile ReentrantLock lock = new ReentrantLock();
 
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
@@ -47,8 +47,13 @@ public class JsonMeta implements GravSerializable {
         return record;
     }
 
-    public Set<String> getKeys() {
-        return this.data.keySet();
+    public List<String> getKeys() {
+        lock.lock();
+        try {
+            return new ArrayList<>(this.data.keySet());
+        } finally {
+            lock.unlock();
+        }
     }
 
     public <T> T get(String path) {
@@ -154,15 +159,27 @@ public class JsonMeta implements GravSerializable {
         String[] currentPath = Arrays.copyOf(parent.path, parent.path.length+1);
         currentPath[currentPath.length-1] = valName;
 
-        //Set paths
-        child.path = currentPath;
-        child.parent = parent;
+        // Must lock with child's lock, because if the child's lock is already held while we set the child's lock to a new one,
+        // then the holder won't be able to unlock the previous lock
+        ReentrantLock childLock = child.lock;
+        childLock.lock();
 
         //Set lock
         child.lock = parent.lock;
 
+        //Switch to the new lock
+        childLock.unlock();
+        parent.lock.lock();
+
+        //Set paths
+        child.path = currentPath;
+        child.parent = parent;
+
         //Set record's children
         parent.record.children.add(child.record);
+
+        //Unlock
+        parent.lock.unlock();
 
     }
 
@@ -276,22 +293,27 @@ public class JsonMeta implements GravSerializable {
     }
 
     public void serialize(GravSerializer serializer, boolean reduced) {
-        int len = reduced ? record.updatedFields.size() : this.data.size();
+        lock.lock();
+        try {
+            int len = reduced ? record.updatedFields.size() : this.data.size();
 
-        serializer.writeBoolean(reduced); //Probably not needed but who cares about an extra couple bytes
-        serializer.writeInt(len);
+            serializer.writeBoolean(reduced); //Probably not needed but who cares about an extra couple bytes
+            serializer.writeInt(len);
 
-        if (reduced) {
-            for (String updatedField : record.updatedFields) {
-                Object val = get(updatedField);
-                serializeObject(serializer, updatedField, val, true);
+            if (reduced) {
+                for (String updatedField : record.updatedFields) {
+                    Object val = get(updatedField);
+                    serializeObject(serializer, updatedField, val, true);
+                }
+            } else {
+                for (Map.Entry<String, Object> entry : this.data.entrySet()) {
+                    String key = entry.getKey();
+                    Object val = entry.getValue();
+                    serializeObject(serializer, key, val, false);
+                }
             }
-        } else {
-            for (Map.Entry<String, Object> entry : this.data.entrySet()) {
-                String key = entry.getKey();
-                Object val = entry.getValue();
-                serializeObject(serializer, key, val, false);
-            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -309,6 +331,8 @@ public class JsonMeta implements GravSerializable {
 
     public static JsonMeta deserialize(GravSerializer serializer) {
         JsonMeta meta = new JsonMeta();
+
+        //No need to use lock
 
         boolean reduced = serializer.readBoolean();
         int len = serializer.readInt();
@@ -334,13 +358,13 @@ public class JsonMeta implements GravSerializable {
         meta.set("hey.one.two.four.num", 2);
         meta.set("hey.one.two.oof.yo", 2);
         System.out.println(meta);
+        System.out.println("\n\n\n");
 
         meta.getRecord().clear();
 
         JsonMeta test = new JsonMeta();
         test.set("yo", 2);
         test.set("dude", "hi");
-
         meta.set("hey.one.two.oof", test);
 
         meta.set("hey.one.two.three.num", 3);

@@ -1,9 +1,6 @@
 package net.ultragrav.serializer;
 
-import lombok.val;
-
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 //TODO make thread-safe
@@ -165,7 +162,7 @@ public class JsonMeta implements GravSerializable {
     }
 
     private void markDirty(String key) {
-        record.updatedFields.add(key);
+        record.markDirty(key);
         if (parent != null) {
             if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
             parent.markDirty(path[path.length - 1]);
@@ -174,7 +171,7 @@ public class JsonMeta implements GravSerializable {
 
     private void markDirtyRecursive() {
         for (Map.Entry<String, Object> ent : data.entrySet()) {
-            record.updatedFields.add(ent.getKey());
+            record.markDirty(ent.getKey());
             if (ent.getValue() instanceof JsonMeta) {
                 ((JsonMeta) ent.getValue()).markDirtyRecursive();
             }
@@ -189,20 +186,20 @@ public class JsonMeta implements GravSerializable {
         boolean changed = false;
         for (Map.Entry<String, Object> ent : data.entrySet()) {
             if (!other.data.containsKey(ent.getKey())) {
-                record.updatedFields.add(ent.getKey());
+                record.markDirty(ent.getKey());
                 changed = true;
                 continue;
             }
 
             if (ent.getValue() instanceof JsonMeta) {
                 if (!(other.data.get(ent.getKey()) instanceof JsonMeta)) {
-                    record.updatedFields.add(ent.getKey());
+                    record.markDirty(ent.getKey());
                     changed = true;
                 } else {
                     ((JsonMeta) ent.getValue()).markDirtyDiff((JsonMeta) other.data.get(ent.getKey()));
                 }
             } else if (!Objects.equals(ent.getValue(), other.data.get(ent.getKey()))) {
-                record.updatedFields.add(ent.getKey());
+                record.markDirty(ent.getKey());
                 changed = true;
             }
         }
@@ -252,7 +249,7 @@ public class JsonMeta implements GravSerializable {
             JsonMeta meta = new JsonMeta();
 
             //Iterate through updated fields
-            for (String updatedField : record.updatedFields) {
+            for (String updatedField : record.getUpdatedFields()) {
                 Object val = get(updatedField);
 
                 //Check if it's a JsonMeta with it's parent as us
@@ -276,13 +273,13 @@ public class JsonMeta implements GravSerializable {
     public void serialize(GravSerializer serializer, boolean reduced) {
         lock.lock();
         try {
-            int len = reduced ? record.updatedFields.size() : this.data.size();
+            int len = reduced ? record.getUpdatedFields().size() : this.data.size();
 
             serializer.writeBoolean(reduced); //Probably not needed but who cares about an extra couple bytes
             serializer.writeInt(len);
 
             if (reduced) {
-                for (String updatedField : record.updatedFields) {
+                for (String updatedField : record.getUpdatedFields()) {
                     Object val = get(updatedField);
                     serializeObject(serializer, updatedField, val, true);
                 }

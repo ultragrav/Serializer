@@ -1,11 +1,8 @@
 package net.ultragrav.serializer;
 
-import com.github.luben.zstd.Zstd;
 import net.ultragrav.serializer.compressors.StandardCompressor;
-import sun.misc.Unsafe;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
@@ -29,8 +26,9 @@ public class GravSerializer {
     public GravSerializer(InputStream is, Compressor compressor) throws IOException {
         int i;
         ensureCapacity(is.available());
-        while ((i = is.read()) != -1) {
-            writeByte((byte) i);
+        byte[] buff = new byte[2048];
+        while ((i = is.read(buff)) != -1) {
+            append(buff, i);
         }
         is.close();
         if (compressor != null) {
@@ -347,9 +345,7 @@ public class GravSerializer {
             bt = compressor.compress(bt);
         }
 
-        for (byte b : bt) {
-            stream.write(b);
-        }
+        stream.write(bt);
         stream.flush();
         stream.close();
     }

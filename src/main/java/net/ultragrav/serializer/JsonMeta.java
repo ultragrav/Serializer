@@ -22,17 +22,7 @@ public class JsonMeta implements GravSerializable {
     @SuppressWarnings("unchecked")
     public JsonMeta(Map<String, Object> map) {
         for (Map.Entry<String, Object> ent : map.entrySet()) {
-            Object val = ent.getValue();
-            if (val instanceof Map) {
-                val = new JsonMeta((Map<String, Object>) val);
-            }
-            if (val instanceof Meta) {
-                val = new JsonMeta(((Meta) val).asMap());
-            }
-            if (val instanceof JsonMeta) {
-                link(this, (JsonMeta) val, ent.getKey());
-            }
-            data.put(ent.getKey(), val);
+            set(ent.getKey(), ent.getValue(), false);
         }
     }
 
@@ -98,6 +88,10 @@ public class JsonMeta implements GravSerializable {
         set(path.split(delimiter), value);
     }
 
+    public void set(String path, Object value, boolean markDirty) {
+        set(path.split(delimiter), value, markDirty);
+    }
+
     public void set(String[] path, Object value) {
         set(path, value, true);
     }
@@ -160,11 +154,17 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
-    /**
-     * Take everything from the supplied meta and merge it into this meta, replacing identical keys
-     */
     public void putAll(JsonMeta meta) {
+        putAll(meta, true);
+    }
+
+        /**
+         * Take everything from the supplied meta and merge it into this meta, replacing identical keys
+         */
+    public void putAll(JsonMeta meta, boolean markDirty) {
         lock.lock();
+        meta.lock.lock();
+
         try {
             for (String key : meta.getKeys()) {
                 Object next = meta.get(new String[]{key});
@@ -173,10 +173,11 @@ public class JsonMeta implements GravSerializable {
                 if (next instanceof JsonMeta && current instanceof JsonMeta) {
                     ((JsonMeta) current).putAll((JsonMeta) next);
                 } else {
-                    set(key, next);
+                    set(new String[] {key}, next, markDirty);
                 }
             }
         } finally {
+            meta.lock.unlock();
             lock.unlock();
         }
     }

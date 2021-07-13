@@ -4,6 +4,7 @@ import net.ultragrav.serializer.util.Json;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -215,5 +216,18 @@ public class Meta implements GravSerializable {
 
     public String asJson() {
         return Json.make(meta).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Meta meta1 = (Meta) o;
+        return meta.equals(meta1.meta);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(meta);
     }
 }

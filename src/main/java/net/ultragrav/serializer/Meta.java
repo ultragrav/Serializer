@@ -45,6 +45,12 @@ public class Meta implements GravSerializable {
         }
     }
 
+    /**
+     * Create a meta from a json string
+     *
+     * @param json Json String
+     * @return Meta
+     */
     public static Meta fromJson(String json) {
         return new Meta(Json.read(json).asMap());
     }
@@ -54,6 +60,14 @@ public class Meta implements GravSerializable {
         return data == null ? null : new Meta(data);
     }
 
+    /**
+     * Same as {@link Meta#getOrSet(String, Object, Object...)} but specifically for
+     * for Meta
+     *
+     * @param key          Key
+     * @param defaultValue Default Meta
+     * @return Existing value if present, otherwise {@code defaultValue}
+     */
     public Meta getOrSetMeta(String key, Meta defaultValue) {
         //Read lock is less expensive, so try first
         lock.readLock().lock();
@@ -78,6 +92,12 @@ public class Meta implements GravSerializable {
         }
     }
 
+    /**
+     * Set a value in this meta.
+     *
+     * @param key    Key
+     * @param object New value
+     */
     public void set(String key, Object object) {
         lock.writeLock().lock();
         try {
@@ -91,6 +111,11 @@ public class Meta implements GravSerializable {
         }
     }
 
+    /**
+     * Put all fields from {@code other} into this meta.
+     *
+     * @param other Other meta
+     */
     public void setAll(Meta other) {
         this.meta.putAll(other.meta);
     }
@@ -128,6 +153,18 @@ public class Meta implements GravSerializable {
         return (T) o;
     }
 
+    /**
+     * Get a value, or set and get if absent.
+     * <p>
+     * If the value is already present, it is returned, otherwise the default
+     * value is set and returned.
+     *
+     * @param key              Key
+     * @param defaultValue     Default value
+     * @param constructionArgs Construction arguments (for deserialization)
+     * @param <T>              Type of the value
+     * @return Existing value if present, otherwise {@code defaultValue}
+     */
     public <T> T getOrSet(String key, T defaultValue, Object... constructionArgs) {
         lock.readLock().lock();
         try {
@@ -151,6 +188,16 @@ public class Meta implements GravSerializable {
         }
     }
 
+    /**
+     * Get an object, this is identical to {@link Meta#get(String, Object...)}
+     *
+     * @param key       Key
+     * @param arguments Construction arguments (for deserialization)
+     * @param <T>       Type of the value
+     * @return Value
+     * @deprecated Use {@link Meta#get(String, Object...)} instead
+     */
+    @Deprecated
     public <T> T getObject(String key, Object... arguments) {
         return get(key, arguments);
     }
@@ -180,13 +227,25 @@ public class Meta implements GravSerializable {
         }
     }
 
+    /**
+     * Get a string representation of this meta data
+     * Uses recursion with indentation to show a
+     * structural representation of this meta.
+     *
+     * @return String representation of this meta
+     */
     @Override
     public String toString() {
         return recursiveToString(0);
     }
 
+    /**
+     * Recursively generate the string representation of this meta.
+     *
+     * @param indentation Indentation to use
+     * @return String representation of this meta
+     */
     private String recursiveToString(int indentation) {
-
         StringBuilder indent = new StringBuilder();
         for (int i = 0; i < indentation; i++) {
             indent.append("  ");
@@ -214,6 +273,11 @@ public class Meta implements GravSerializable {
         return new HashMap<>(meta);
     }
 
+    /**
+     * Represent this meta as a JSON string
+     *
+     * @return JSON String
+     */
     public String asJson() {
         return Json.make(meta).toString();
     }

@@ -138,4 +138,16 @@ public class TestGravSerializer {
 
         assert i.equals(i2);
     }
+
+    @Test
+    public void testChar() {
+        char ch = '\u1234';
+
+        GravSerializer ser = new GravSerializer();
+        ser.writeChar(ch);
+
+        char ch2 = ser.readChar();
+
+        assert ch == ch2;
+    }
 }

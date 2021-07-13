@@ -193,6 +193,14 @@ public class GravSerializer {
         return l;
     }
 
+    public void writeChar(char ch) {
+        writeVarInt((int) ch);
+    }
+
+    public char readChar() {
+        return (char) (int) readVarInt();
+    }
+
     public void writeBigInteger(BigInteger i) {
         writeByteArray(i.toByteArray());
     }

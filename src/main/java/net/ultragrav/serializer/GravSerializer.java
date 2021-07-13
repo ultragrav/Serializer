@@ -3,6 +3,7 @@ package net.ultragrav.serializer;
 import net.ultragrav.serializer.compressors.StandardCompressor;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
@@ -190,6 +191,14 @@ public class GravSerializer {
             c++;
         }
         return l;
+    }
+
+    public void writeBigInteger(BigInteger i) {
+        writeByteArray(i.toByteArray());
+    }
+
+    public BigInteger readBigInteger() {
+        return new BigInteger(readByteArray());
     }
 
     public void writeBoolean(boolean bool) {

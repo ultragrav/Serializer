@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -120,5 +121,21 @@ public class TestGravSerializer {
         long var = ser.readVarInt();
 
         assert var == num;
+    }
+
+    @Test
+    public void testBigInteger() {
+        Random random = new Random();
+
+        byte[] bival = new byte[random.nextInt(12) + 12];
+        random.nextBytes(bival);
+        BigInteger i = new BigInteger(bival);
+
+        GravSerializer ser = new GravSerializer();
+        ser.writeBigInteger(i);
+
+        BigInteger i2 = ser.readBigInteger();
+
+        assert i.equals(i2);
     }
 }

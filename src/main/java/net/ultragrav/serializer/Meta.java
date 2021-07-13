@@ -1,18 +1,14 @@
 package net.ultragrav.serializer;
 
-import com.google.common.annotations.Beta;
 import net.ultragrav.serializer.util.Json;
-import sun.misc.IOUtils;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Meta implements GravSerializable {
+    private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
     private Map<String, Object> meta = new HashMap<>();
     private Map<String, GravSerializer> toDeserialize = new HashMap<>();
 
@@ -20,9 +16,8 @@ public class Meta implements GravSerializable {
         this.meta = meta;
     }
 
-    public Meta() {}
-
-    private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
+    public Meta() {
+    }
 
     /**
      * Load this element meta from a serializer
@@ -49,6 +44,10 @@ public class Meta implements GravSerializable {
         }
     }
 
+    public static Meta fromJson(String json) {
+        return new Meta(Json.read(json).asMap());
+    }
+
     public Meta getMeta(String key) {
         Map<String, Object> data = this.getObject(key);
         return data == null ? null : new Meta(data);
@@ -59,7 +58,7 @@ public class Meta implements GravSerializable {
         lock.readLock().lock();
         try {
             Meta meta = getMeta(key);
-            if(meta != null)
+            if (meta != null)
                 return meta;
         } finally {
             lock.readLock().unlock();
@@ -128,7 +127,7 @@ public class Meta implements GravSerializable {
         lock.readLock().lock();
         try {
             Object object = get(key, constructionArgs);
-            if(object != null)
+            if (object != null)
                 return (T) object;
         } finally {
             lock.readLock().unlock();
@@ -178,7 +177,7 @@ public class Meta implements GravSerializable {
 
     /**
      * Get a copy of this meta's internal data
-     *
+     * <p>
      * Note: This does not contain any objects that failed deserialization during the initialization
      *
      * @return Copy of the internal data
@@ -189,9 +188,5 @@ public class Meta implements GravSerializable {
 
     public String asJson() {
         return Json.make(meta).toString();
-    }
-
-    public static Meta fromJson(String json) {
-        return new Meta(Json.read(json).asMap());
     }
 }

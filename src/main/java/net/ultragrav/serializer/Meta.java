@@ -263,6 +263,31 @@ public class Meta implements GravSerializable {
     }
 
     /**
+     * Returns a Meta containing all fields that are
+     * present in {@code other}, but not present, or
+     * different in this meta.
+     *
+     * @param other Other Meta
+     * @return Differences between this and other
+     */
+    public Meta diff(Meta other) {
+        Meta ret = new Meta();
+        for (Map.Entry<String, Object> ent : other.meta.entrySet()) {
+            if (!meta.containsKey(ent.getKey())) {
+                ret.set(ent.getKey(), ent.getValue());
+                continue;
+            }
+            Object oObj = ent.getValue();
+            Object tObj = meta.get(ent.getKey());
+
+            if (!Objects.equals(oObj, tObj)) {
+                ret.set(ent.getKey(), ent.getValue());
+            }
+        }
+        return ret;
+    }
+
+    /**
      * Get a copy of this meta's internal data
      * <p>
      * Note: This does not contain any objects that failed deserialization during the initialization

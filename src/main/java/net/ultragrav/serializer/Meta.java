@@ -90,6 +90,10 @@ public class Meta implements GravSerializable {
         }
     }
 
+    public void setAll(Meta other) {
+        this.meta.putAll(other.meta);
+    }
+
     /**
      * Get an object from this element meta
      *
@@ -173,6 +177,29 @@ public class Meta implements GravSerializable {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    @Override
+    public String toString() {
+        return recursiveToString(0);
+    }
+
+    private String recursiveToString(int indentation) {
+
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < indentation; i++) {
+            indent.append("  ");
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("{").append("\n");
+        for (Map.Entry<String, Object> entry : meta.entrySet()) {
+            Object val = entry.getValue();
+            String valStr = val instanceof Meta ? ((Meta) val).recursiveToString(indentation + 1) : val.toString();
+            builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
+        }
+
+        return builder.append(indent).append("}").toString();
     }
 
     /**

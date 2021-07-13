@@ -21,6 +21,4 @@ public class SerializerElement {
     public Serializer<?> getSerializer() {
         return serializer;
     }
-
-
 }

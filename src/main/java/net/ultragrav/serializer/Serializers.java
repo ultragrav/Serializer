@@ -259,6 +259,16 @@ public class Serializers {
         }));
     }
 
+    public static boolean canSerialize(Class<?> clazz) {
+        for (int i = 0; i < SERIALIZERS.size(); i++) {
+            SerializerElement s = SERIALIZERS.get(i);
+            if (s.getClazz().isAssignableFrom(clazz)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void serializeObject(GravSerializer serializer, Object obj) {
         if (obj == null) {
             serializer.writeByte((byte) 0);

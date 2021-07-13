@@ -47,13 +47,18 @@ public class FieldSerializer {
 
         Meta ret = new Meta();
         for (Field f : allFields) {
+            // Don't serialize special (jvm) fields.
             if (f.getName().contains("$")) continue;
+
+            // Ignore fields with @NoSerialize
+            if (f.getAnnotation(NoSerialize.class) != null) continue;
+
             f.setAccessible(true);
             try {
                 if (!Serializers.canSerialize(f.getType()) && recursive) {
                     Meta m = new Meta();
                     m.set("__class", f.getType().getName());
-                    m.setAll(serializeFields(f.get(obj), recursive));
+                    m.setAll(serializeFields(f.get(obj), true));
                     ret.set(f.getName(), m);
                 } else {
                     ret.set(f.getName(), f.get(obj));
@@ -67,6 +72,13 @@ public class FieldSerializer {
 
     /**
      * Load all fields from a meta into the object
+     * <p>
+     * Note: This will only override fields in the object
+     * that are present in the meta.
+     * <p>
+     * This does not consider the {@link NoSerialize} annotation,
+     * even fields annotated with it can be modified if they are
+     * present in the meta.
      *
      * @param t    Object
      * @param meta Meta
@@ -84,32 +96,47 @@ public class FieldSerializer {
                 }
                 if (f == null) {
                     System.out.println("Warning: No field found for " + ent.getKey() + ", ignoring it.");
-                } else {
-                    f.setAccessible(true);
-                    if (f.getType() == Meta.class) {
-                        Map<String, Object> map = (Map<String, Object>) ent.getValue();
-                        f.set(t, new Meta(map));
-                    } else if (!Serializers.canSerialize(f.getType()) && ent.getValue() instanceof Map) {
-                        Map<String, Object> map = (Map<String, Object>) ent.getValue();
-                        if (map.containsKey("__class")) {
-                            String cla = (String) map.remove("__class");
-                            Class<?> clazz = Class.forName(cla);
-                            Object obj;
+                    continue;
+                }
+                f.setAccessible(true);
+                if (f.getType() == Meta.class) {
+                    Map<String, Object> map = (Map<String, Object>) ent.getValue();
+                    f.set(t, new Meta(map));
+                } else if (!Serializers.canSerialize(f.getType()) && ent.getValue() instanceof Map) {
+                    Map<String, Object> map = (Map<String, Object>) ent.getValue();
+                    if (map.containsKey("__class")) {
+                        String cla = (String) map.remove("__class");
+                        Class<?> clazz = Class.forName(cla);
+
+                        // Warning if the classes don't match
+                        if (clazz != f.getType()) {
+                            System.out.println("Warning: Could not deserialize field: " + f.getName() + " because of type mismatch!");
+                            continue;
+                        }
+
+                        // Deserialize into existing object if present
+                        Object obj = f.get(t);
+
+                        // If no object is present create it
+                        if (obj == null) {
                             try {
+                                // Search for empty constructor
                                 Constructor<?> con = clazz.getConstructor();
                                 obj = con.newInstance();
                             } catch (NoSuchMethodException err) {
-                                obj = unsafe.allocateInstance(clazz); // Alternative methods?
+                                // No empty constructor found, so we just allocate
+                                // a new instance and hope it is fine.
+                                obj = unsafe.allocateInstance(clazz);
                             }
-                            Meta m2 = new Meta(map);
-                            deserializeFields(obj, m2);
-                            f.set(t, obj);
                         }
-                    } else {
-                        f.set(t, ent.getValue());
-                    }
-                }
 
+                        Meta m2 = new Meta(map);
+                        deserializeFields(obj, m2);
+                        f.set(t, obj);
+                    }
+                } else {
+                    f.set(t, ent.getValue());
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

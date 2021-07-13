@@ -8,6 +8,76 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class TestFieldSerializer {
+    @Test
+    public void testOne() {
+        TestClassOne test = new TestClassOne();
+        test.strField = "notDef";
+        test.iField = 3;
+        test.oField = new HashMap<>();
+        test.oField.put("Oof", 19L);
+
+        Meta meta = FieldSerializer.serializeFields(test, false);
+
+        TestClassOne other = new TestClassOne();
+        FieldSerializer.deserializeFields(other, meta);
+        assert Objects.equals(test, other);
+    }
+
+    @Test
+    public void testTwoNormal() {
+        TestClassTwoA a1 = new TestClassTwoA();
+        a1.name = "firstA";
+        TestClassTwoB b1 = new TestClassTwoB();
+        b1.name = "firstB";
+        b1.id = UUID.randomUUID();
+        a1.other = b1;
+
+        // Ensure that non-recursive serialization allows deserialization
+        Meta meta = FieldSerializer.serializeFields(a1, false);
+
+        TestClassTwoA a2 = new TestClassTwoA();
+        FieldSerializer.deserializeFields(a2, meta);
+
+        assert Objects.equals(a1, a2);
+    }
+
+    @Test
+    public void testTwoRecursive() {
+        TestClassTwoA a1 = new TestClassTwoA();
+        a1.name = "firstA";
+        TestClassTwoB b1 = new TestClassTwoB();
+        b1.name = "firstB";
+        b1.id = UUID.randomUUID();
+        a1.other = b1;
+
+        // Test if recursively serialized object serializes to bytes correctly
+        Meta meta = FieldSerializer.serializeFields(a1, true);
+
+        GravSerializer ser = new GravSerializer();
+        meta.serialize(ser);
+
+        meta = new Meta(ser);
+
+        TestClassTwoA a3 = new TestClassTwoA();
+        FieldSerializer.deserializeFields(a3, meta);
+
+        assert Objects.equals(a1, a3);
+    }
+
+    @Test
+    public void testMeta() {
+        TestClassMeta test = new TestClassMeta();
+        test.meta = new Meta();
+        test.meta.set("something", 1234);
+
+        Meta meta = FieldSerializer.serializeFields(test, false);
+
+        TestClassMeta other = new TestClassMeta();
+        FieldSerializer.deserializeFields(other, meta);
+
+        assert Objects.equals(test, other);
+    }
+
     public static class TestClassOne {
         private String strField = "def";
         private int iField = 1;
@@ -67,59 +137,20 @@ public class TestFieldSerializer {
         }
     }
 
-    @Test
-    public void testOne() {
-        TestClassOne test = new TestClassOne();
-        test.strField = "notDef";
-        test.iField = 3;
-        test.oField = new HashMap<>();
-        test.oField.put("Oof", 19L);
+    public static class TestClassMeta {
+        private Meta meta;
 
-        Meta meta = FieldSerializer.serializeFields(test, false);
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TestClassMeta that = (TestClassMeta) o;
+            return Objects.equals(meta, that.meta);
+        }
 
-        TestClassOne other = new TestClassOne();
-        FieldSerializer.deserializeFields(other, meta);
-        assert Objects.equals(test, other);
-    }
-
-    @Test
-    public void testTwoNormal() {
-        TestClassTwoA a1 = new TestClassTwoA();
-        a1.name = "firstA";
-        TestClassTwoB b1 = new TestClassTwoB();
-        b1.name = "firstB";
-        b1.id = UUID.randomUUID();
-        a1.other = b1;
-
-        // Ensure that non-recursive serialization allows deserialization
-        Meta meta = FieldSerializer.serializeFields(a1, false);
-
-        TestClassTwoA a2 = new TestClassTwoA();
-        FieldSerializer.deserializeFields(a2, meta);
-
-        assert Objects.equals(a1, a2);
-    }
-
-    @Test
-    public void testTwoRecursive() {
-        TestClassTwoA a1 = new TestClassTwoA();
-        a1.name = "firstA";
-        TestClassTwoB b1 = new TestClassTwoB();
-        b1.name = "firstB";
-        b1.id = UUID.randomUUID();
-        a1.other = b1;
-
-        // Test if recursively serialized object serializes to bytes correctly
-        Meta meta = FieldSerializer.serializeFields(a1, true);
-
-        GravSerializer ser = new GravSerializer();
-        meta.serialize(ser);
-
-        meta = new Meta(ser);
-
-        TestClassTwoA a3 = new TestClassTwoA();
-        FieldSerializer.deserializeFields(a3, meta);
-
-        assert Objects.equals(a1, a3);
+        @Override
+        public int hashCode() {
+            return Objects.hash(meta);
+        }
     }
 }

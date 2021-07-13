@@ -86,7 +86,10 @@ public class FieldSerializer {
                     System.out.println("Warning: No field found for " + ent.getKey() + ", ignoring it.");
                 } else {
                     f.setAccessible(true);
-                    if (!Serializers.canSerialize(f.getType()) && ent.getValue() instanceof Map) {
+                    if (f.getType() == Meta.class) {
+                        Map<String, Object> map = (Map<String, Object>) ent.getValue();
+                        f.set(t, new Meta(map));
+                    } else if (!Serializers.canSerialize(f.getType()) && ent.getValue() instanceof Map) {
                         Map<String, Object> map = (Map<String, Object>) ent.getValue();
                         if (map.containsKey("__class")) {
                             String cla = (String) map.remove("__class");

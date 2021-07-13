@@ -171,6 +171,27 @@ public class GravSerializer {
         append(bites);
     }
 
+    public void writeVarInt(long l) {
+        while (l != 0) {
+            boolean sig = l >>> 7 != 0;
+            byte b = (byte) ((sig ? 0b10000000 : 0) | (l & 0b01111111));
+            writeByte(b);
+            l >>>= 7;
+        }
+    }
+
+    public long readVarInt() {
+        long l = 0;
+        int c = 0;
+        byte b = (byte) 0xFF;
+        while ((b & 0b10000000) != 0) {
+            b = readByte();
+            l |= (b & 0b01111111L) << 7*c;
+            c++;
+        }
+        return l;
+    }
+
     public void writeBoolean(boolean bool) {
         this.writeByte((byte) (bool ? 1 : 0));
     }

@@ -109,4 +109,16 @@ public class TestGravSerializer {
 
         assert Arrays.equals(bt, bt2);
     }
+
+    @Test
+    public void testVarInt() {
+        GravSerializer ser = new GravSerializer();
+
+        long num = (long) (Math.random() * Long.MAX_VALUE);
+        ser.writeVarInt(num);
+
+        long var = ser.readVarInt();
+
+        assert var == num;
+    }
 }

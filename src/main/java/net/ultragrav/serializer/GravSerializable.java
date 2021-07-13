@@ -40,7 +40,7 @@ public interface GravSerializable {
         boolean c1 = false;
         try {
             Class<?> clazz = Class.forName(className);
-            if (clazz.isAssignableFrom(MetaSerializable.class)) {
+            if (MetaSerializable.class.isAssignableFrom(clazz)) {
                 return MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer);
             }
             try {

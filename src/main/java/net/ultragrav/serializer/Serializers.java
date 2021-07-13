@@ -257,6 +257,147 @@ public class Serializers {
                 return serializer.readBooleanArray();
             }
         }));
+        // 16
+        SERIALIZERS.add(new SerializerElement(long[].class, new Serializer<long[]>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                long[] arr = (long[]) t;
+                serializer.writeInt(arr.length);
+                for (long l : arr) {
+                    serializer.writeLong(l);
+                }
+            }
+
+            @Override
+            public long[] deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                long[] arr = new long[len];
+                for (int i = 0; i < len; i++) {
+                    arr[i] = serializer.readLong();
+                }
+                return arr;
+            }
+        }));
+        // 17
+        SERIALIZERS.add(new SerializerElement(short[].class, new Serializer<short[]>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                short[] arr = (short[]) t;
+                serializer.writeInt(arr.length);
+                for (short s : arr) {
+                    serializer.writeShort(s);
+                }
+            }
+
+            @Override
+            public short[] deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                short[] arr = new short[len];
+                for (int i = 0; i < len; i++) {
+                    arr[i] = serializer.readShort();
+                }
+                return arr;
+            }
+        }));
+        // 18
+        SERIALIZERS.add(new SerializerElement(Short.class, new Serializer<Short>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeShort((short) t);
+            }
+
+            @Override
+            public Short deserialize(GravSerializer serializer, Object... args) {
+                return serializer.readShort();
+            }
+        }));
+        // 19
+        SERIALIZERS.add(new SerializerElement(Float.class, new Serializer<Float>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeFloat((float) t);
+            }
+
+            @Override
+            public Float deserialize(GravSerializer serializer, Object... args) {
+                return serializer.readFloat();
+            }
+        }));
+        // 20
+        SERIALIZERS.add(new SerializerElement(float[].class, new Serializer<float[]>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                float[] arr = (float[]) t;
+                serializer.writeInt(arr.length);
+                for (float f : arr) {
+                    serializer.writeFloat(f);
+                }
+            }
+
+            @Override
+            public float[] deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                float[] arr = new float[len];
+                for (int i = 0; i < len; i++) {
+                    arr[i] = serializer.readFloat();
+                }
+                return arr;
+            }
+        }));
+        // 21
+        SERIALIZERS.add(new SerializerElement(double[].class, new Serializer<double[]>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                double[] arr = (double[]) t;
+                serializer.writeInt(arr.length);
+                for (double d : arr) {
+                    serializer.writeDouble(d);
+                }
+            }
+
+            @Override
+            public double[] deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                double[] arr = new double[len];
+                for (int i = 0; i < len; i ++) {
+                    arr[i] = serializer.readDouble();
+                }
+                return arr;
+            }
+        }));
+        // 22
+        SERIALIZERS.add(new SerializerElement(Character.class, new Serializer<Character>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeChar((char) t);
+            }
+
+            @Override
+            public Character deserialize(GravSerializer serializer, Object... args) {
+                return serializer.readChar();
+            }
+        }));
+        // 23
+        SERIALIZERS.add(new SerializerElement(char[].class, new Serializer<char[]>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                char[] arr = (char[]) t;
+                serializer.writeInt(arr.length);
+                for (char c : arr) {
+                    serializer.writeChar(c);
+                }
+            }
+
+            @Override
+            public char[] deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                char[] arr = new char[len];
+                for (int i = 0; i < len; i ++) {
+                    arr[i] = serializer.readChar();
+                }
+                return arr;
+            }
+        }));
     }
 
     public static boolean canSerialize(Class<?> clazz) {
@@ -291,7 +432,7 @@ public class Serializers {
             return null;
         }
         if (type > SERIALIZERS.size()) {
-            throw new IllegalArgumentException("No serializer found! Invalid object type: " + (type-1));
+            throw new IllegalArgumentException("No serializer found! Invalid object type: " + (type - 1));
         }
         return SERIALIZERS.get(type - 1).getSerializer().deserialize(serializer, args);
     }

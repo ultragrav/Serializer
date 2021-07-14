@@ -124,6 +124,20 @@ public class TestGravSerializer {
     }
 
     @Test
+    public void testVarIntNegative() {
+        GravSerializer ser = new GravSerializer();
+
+        long num = -40;
+
+        ser.writeVarInt(num);
+        System.out.println(Arrays.toString(ser.toByteArray()));
+
+        long var = ser.readVarInt();
+
+        assert var == num;
+    }
+
+    @Test
     public void testBigInteger() {
         Random random = new Random();
 

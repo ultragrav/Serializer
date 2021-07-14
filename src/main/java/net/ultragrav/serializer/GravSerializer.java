@@ -173,6 +173,13 @@ public class GravSerializer {
     }
 
     public void writeVarInt(long l) {
+        if (l < 0) {
+            l = -l;
+            writeBoolean(true);
+        } else {
+            writeBoolean(false);
+        }
+
         while (l != 0) {
             boolean sig = l >>> 7 != 0;
             byte b = (byte) ((sig ? 0b10000000 : 0) | (l & 0b01111111));
@@ -182,6 +189,8 @@ public class GravSerializer {
     }
 
     public long readVarInt() {
+        boolean negative = readBoolean();
+
         long l = 0;
         int c = 0;
         byte b = (byte) 0xFF;
@@ -190,7 +199,7 @@ public class GravSerializer {
             l |= (b & 0b01111111L) << 7*c;
             c++;
         }
-        return l;
+        return negative ? -l : l;
     }
 
     public void writeChar(char ch) {

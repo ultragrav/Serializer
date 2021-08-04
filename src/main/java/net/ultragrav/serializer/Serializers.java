@@ -108,7 +108,7 @@ public class Serializers {
                 Map<Object, Object> map = new ConcurrentHashMap<>();
                 for (int i = 0; i < size; i++) {
                     Map.Entry<?, ?> entry = (Map.Entry<?, ?>) deserializeObject(serializer);
-                    if (entry == null) {
+                    if (entry == null || entry.getValue() == null) {
                         continue;
                     }
                     map.put(entry.getKey(), entry.getValue());

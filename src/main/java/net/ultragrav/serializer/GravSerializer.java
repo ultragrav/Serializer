@@ -2,11 +2,12 @@ package net.ultragrav.serializer;
 
 import net.ultragrav.serializer.compressors.StandardCompressor;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Random;
 import java.util.UUID;
 
 @SuppressWarnings("unchecked")

@@ -1,7 +1,10 @@
 package net.ultragrav.serializer;
 
+import net.ultragrav.serializer.util.JsonUtil;
+
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 //TODO make thread-safe
 public class JsonMeta implements GravSerializable {
@@ -158,9 +161,9 @@ public class JsonMeta implements GravSerializable {
         putAll(meta, true);
     }
 
-        /**
-         * Take everything from the supplied meta and merge it into this meta, replacing identical keys
-         */
+    /**
+     * Take everything from the supplied meta and merge it into this meta, replacing identical keys
+     */
     public void putAll(JsonMeta meta, boolean markDirty) {
         lock.lock();
         meta.lock.lock();
@@ -173,7 +176,7 @@ public class JsonMeta implements GravSerializable {
                 if (next instanceof JsonMeta && current instanceof JsonMeta) {
                     ((JsonMeta) current).putAll((JsonMeta) next);
                 } else {
-                    set(new String[] {key}, next, markDirty);
+                    set(new String[]{key}, next, markDirty);
                 }
             }
         } finally {
@@ -290,11 +293,44 @@ public class JsonMeta implements GravSerializable {
         builder.append("{").append("\n");
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             Object val = entry.getValue();
-            String valStr = val instanceof JsonMeta ? ((JsonMeta) val).recursiveToString(indentation + 1) : val.toString();
+            String valStr = val == null ? "null" :
+                    val instanceof JsonMeta ? ((JsonMeta) val).recursiveToString(indentation + 1) : val.toString();
             builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
         }
 
         return builder.append(indent).append("}").toString();
+    }
+
+    /**
+     * Convert an object to json, maybe works!
+     *
+     * @return JSON representation of this JsonMeta
+     */
+    public String toJson() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        String objs = data.entrySet().stream()
+                .map(ent -> "\"" + ent.getKey() + "\": " + jsonStringify(ent.getValue()))
+                .collect(Collectors.joining(", "));
+        builder.append(objs);
+        return builder.append("}").toString();
+    }
+
+    private static String jsonStringify(Object obj) {
+        String valStr;
+        if (obj == null) {
+            valStr = "null";
+        } else if (obj instanceof JsonMeta) {
+            valStr = ((JsonMeta) obj).toJson();
+        } else if (obj instanceof List) {
+            valStr = "[" + ((List<?>) obj).stream().map(JsonMeta::jsonStringify)
+                    .collect(Collectors.joining(", ")) + "]";
+        } else if (obj instanceof String) {
+            return "\"" + obj + "\"";
+        } else {
+            valStr = obj.toString();
+        }
+        return valStr;
     }
 
     public JsonMeta reduce() {
@@ -382,6 +418,10 @@ public class JsonMeta implements GravSerializable {
         }
 
         return meta;
+    }
+
+    public static JsonMeta fromJson(String str) {
+        return JsonUtil.readJson(str);
     }
 
     public static void main(String[] args) {

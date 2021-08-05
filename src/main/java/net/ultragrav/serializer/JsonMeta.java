@@ -316,6 +316,32 @@ public class JsonMeta implements GravSerializable {
         return builder.append("}").toString();
     }
 
+    public String toYaml() {
+        return internalYaml(0);
+    }
+
+    private String internalYaml(int indentation) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < indentation; i++) {
+            indent.append("  ");
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            Object val = entry.getValue();
+            String valStr = val == null ? "null" :
+                    val instanceof JsonMeta ? ((JsonMeta) val).internalYaml(indentation + 1) : val.toString();
+            builder.append(indent).append(entry.getKey()).append(": ");
+            if (val instanceof JsonMeta) builder.append("\n");
+            builder.append(valStr);
+            if (!(val instanceof JsonMeta)) {
+                builder.append("\n");
+            }
+        }
+
+        return builder.toString();
+    }
+
     private static String jsonStringify(Object obj) {
         String valStr;
         if (obj == null) {
@@ -438,9 +464,9 @@ public class JsonMeta implements GravSerializable {
 
         JsonMeta test = new JsonMeta();
         test.set("hey.one.two.three.num", 23);
-        test.set("hey.one.two.three.dude", "hi");
+        test.set("hey.one.two.four", "hi");
         meta.putAll(test);
 
-        System.out.println(meta);
+        System.out.println(meta.toYaml());
     }
 }

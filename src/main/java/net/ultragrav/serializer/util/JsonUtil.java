@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.ultragrav.serializer.JsonMeta;
 
-import java.io.*;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
@@ -89,7 +88,8 @@ public class JsonUtil {
                 String key = readString();
 
                 ch = currNWSP();
-                if (ch != ':') throw new IllegalArgumentException("Invalid JSON format, missing ':' at index: " + it.getIndex());
+                if (ch != ':')
+                    throw new IllegalArgumentException("Invalid JSON format, missing ':' at index: " + it.getIndex());
                 ch = nextNWSP();
                 Object value = read();
 
@@ -100,7 +100,8 @@ public class JsonUtil {
                     it.next();
                     return meta;
                 }
-                if (ch != ',') throw new IllegalArgumentException("Invalid JSON format, missing ',' at index: " + it.getIndex());
+                if (ch != ',')
+                    throw new IllegalArgumentException("Invalid JSON format, missing ',' at index: " + it.getIndex());
                 it.next();
             }
         }
@@ -125,7 +126,8 @@ public class JsonUtil {
                     it.next();
                     return objs;
                 }
-                if (ch != ',') throw new IllegalArgumentException("Invalid JSON format, missing ',' at index: " + it.getIndex());
+                if (ch != ',')
+                    throw new IllegalArgumentException("Invalid JSON format, missing ',' at index: " + it.getIndex());
                 it.next();
             }
         }
@@ -171,12 +173,15 @@ public class JsonUtil {
                             break;
                     }
                     escaped = false;
+                } else if (ch == '\\') {
+                    escaped = true;
                 } else if (ch == '"') break;
                 builder.append(ch);
             }
             it.next();
             return builder.toString();
         }
+
         private String readStringShort() {
             StringBuilder builder = new StringBuilder();
             it.previous();
@@ -203,7 +208,8 @@ public class JsonUtil {
             String str = builder.toString();
             try {
                 return Integer.parseInt(str);
-            } catch(NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
             try {
                 return Double.parseDouble(str);
             } catch (NumberFormatException ex) {

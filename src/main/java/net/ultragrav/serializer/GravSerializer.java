@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
@@ -151,25 +152,52 @@ public class GravSerializer {
     }
 
     public void writeLong(long l) {
+        writeLong(l, false);
+    }
+
+    public void writeLong(long l, boolean littleEndian) {
         byte[] bites = new byte[8];
-        for (int i = 0; i < 8; i++) { //8 bytes in a long
-            bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
+        if(!littleEndian) {
+            for (int i = 0; i < 8; i++) { //8 bytes in a long
+                bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
+            }
+        } else {
+            for (int i = 7; i >= 0; i--) { //8 bytes in a long
+                bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
+            }
         }
         append(bites);
     }
 
     public void writeDouble(double d) {
-        writeLong(Double.doubleToRawLongBits(d));
+        writeDouble(d, false);
+    }
+    public void writeDouble(double d, boolean littleEndian) {
+        writeLong(Double.doubleToRawLongBits(d), littleEndian);
     }
 
     public void writeFloat(float d) {
-        writeInt(Float.floatToIntBits(d));
+        writeFloat(d, false);
+    }
+
+    public void writeFloat(float d, boolean littleEndian) {
+        writeInt(Float.floatToIntBits(d), littleEndian);
     }
 
     public void writeInt(int i) {
+        writeInt(i, false);
+    }
+
+    public void writeInt(int i, boolean littleEndian) {
         byte[] bites = new byte[4];
-        for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
-            bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
+
+        if(!littleEndian) {
+            for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
+                bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
+        } else {
+            for (int i1 = 3; i1 >= 0; i1--) //4 bytes in int
+                bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
+        }
         append(bites);
     }
 

@@ -162,8 +162,8 @@ public class GravSerializer {
                 bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
             }
         } else {
-            for (int i = 7; i >= 0; i--) { //8 bytes in a long
-                bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
+            for (int i = 0; i < 8; i++) { //8 bytes in a long
+                bites[7-i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
             }
         }
         append(bites);
@@ -195,8 +195,8 @@ public class GravSerializer {
             for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
                 bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
         } else {
-            for (int i1 = 3; i1 >= 0; i1--) //4 bytes in int
-                bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
+            for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
+                bites[3-i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
         }
         append(bites);
     }
@@ -318,9 +318,19 @@ public class GravSerializer {
     }
 
     public long readLong() {
+        return readLong(false);
+    }
+
+    public long readLong(boolean littleEndian) {
         long out = 0L;
-        for (int i = 0; i < 8; i++) {
-            out |= ((long) readByte() << (i * 8)) & ((long) 255 << (i * 8));
+        if(!littleEndian) {
+            for (int i = 0; i < 8; i++) {
+                out |= ((long) readByte() << (i * 8)) & ((long) 255 << (i * 8));
+            }
+        } else {
+            for (int i = 7; i >= 0; i--) {
+                out |= ((long) readByte() << (i * 8)) & ((long) 255 << (i * 8));
+            }
         }
         return out;
     }
@@ -336,11 +346,19 @@ public class GravSerializer {
     }
 
     public double readDouble() {
-        return Double.longBitsToDouble(readLong());
+        return readDouble(false);
+    }
+
+    public double readDouble(boolean littleEndian) {
+        return Double.longBitsToDouble(readLong(littleEndian));
     }
 
     public float readFloat() {
-        return Float.intBitsToFloat(readInt());
+        return readFloat(false);
+    }
+
+    public float readFloat(boolean littleEndian) {
+        return Float.intBitsToFloat(readInt(littleEndian));
     }
 
     public byte[] readByteArray() {
@@ -377,9 +395,20 @@ public class GravSerializer {
     }
 
     public int readInt() {
+        return readInt(false);
+    }
+
+    public int readInt(boolean littleEndian) {
         int out = 0;
-        for (int i = 0; i < 4; i++) {
-            out |= ((int) readByte() << (i * 8)) & (255 << (i * 8));
+
+        if(!littleEndian) {
+            for (int i = 0; i < 4; i++) {
+                out |= ((int) readByte() << (i * 8)) & (255 << (i * 8));
+            }
+        } else {
+            for (int i = 3; i >= 0; i--) {
+                out |= ((int) readByte() << (i * 8)) & (255 << (i * 8));
+            }
         }
         return out;
     }

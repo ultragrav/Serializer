@@ -58,6 +58,58 @@ public class TestGravSerializer {
     }
 
     @Test
+    public void testInts() {
+        Random random = new Random();
+        for (int i = 0; i < 100; i++) {
+            int r = random.nextInt();
+            GravSerializer serializer = new GravSerializer();
+            boolean littleEndian = random.nextBoolean();
+            serializer.writeInt(r, littleEndian);
+            int result = serializer.readInt(littleEndian);
+            assert result == r;
+        }
+    }
+
+    @Test
+    public void testLongs() {
+        Random random = new Random();
+        for (int i = 0; i < 100; i++) {
+            long r = random.nextLong();
+            GravSerializer serializer = new GravSerializer();
+            boolean littleEndian = random.nextBoolean();
+            serializer.writeLong(r, littleEndian);
+            long result = serializer.readLong(littleEndian);
+            assert result == r;
+        }
+    }
+
+    @Test
+    public void testFloats() {
+        Random random = new Random();
+        for (int i = 0; i < 100; i++) {
+            float r = random.nextFloat();
+            GravSerializer serializer = new GravSerializer();
+            boolean littleEndian = random.nextBoolean();
+            serializer.writeFloat(r, littleEndian);
+            float result = serializer.readFloat(littleEndian);
+            assert result == r;
+        }
+    }
+
+    @Test
+    public void testDoubles() {
+        Random random = new Random();
+        for (int i = 0; i < 100; i++) {
+            double r = random.nextDouble();
+            GravSerializer serializer = new GravSerializer();
+            boolean littleEndian = random.nextBoolean();
+            serializer.writeDouble(r, littleEndian);
+            double result = serializer.readDouble(littleEndian);
+            assert result == r;
+        }
+    }
+
+    @Test
     public void testIO() throws IOException {
         byte[] bt = createRandomBytes(10000);
 

@@ -75,6 +75,10 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
+    public boolean has(String path) {
+        return get(path) != null;
+    }
+
     public <T> T getOrSet(String path, T defaultValue) {
         lock.lock();
         try {
@@ -444,6 +448,22 @@ public class JsonMeta implements GravSerializable {
         }
 
         return meta;
+    }
+
+    public Map<String, Object> asMap() {
+        Map<String, Object> ret = new HashMap<>();
+        this.data.forEach((k, v) -> {
+            if (v instanceof JsonMeta) {
+                ret.put(k, ((JsonMeta) v).asMap());
+            } else {
+                ret.put(k, v);
+            }
+        });
+        return ret;
+    }
+
+    public Meta toMeta() {
+        return new Meta(asMap());
     }
 
     public static JsonMeta fromJson(String str) {

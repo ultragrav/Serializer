@@ -43,6 +43,9 @@ public interface GravSerializable {
             if (MetaSerializable.class.isAssignableFrom(clazz)) {
                 return MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer);
             }
+            if (JsonMetaSerializable.class.isAssignableFrom(clazz)) {
+                return JsonMetaSerializable.deserializeObject(clazz.asSubclass(JsonMetaSerializable.class), serializer);
+            }
             try {
                 Method m = clazz.getMethod("deserialize", argumentTypes);
                 return m.invoke(null, arguments);

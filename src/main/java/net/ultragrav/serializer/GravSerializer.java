@@ -445,4 +445,11 @@ public class GravSerializer {
         stream.flush();
         stream.close();
     }
+
+    public static void main(String[] args) {
+        GravSerializer ser = new GravSerializer();
+        ser.writeFloat(0.05f, true);
+        ser.writeFloat(0.1f, true);
+        System.out.println(Arrays.toString(ser.toByteArray()));
+    }
 }

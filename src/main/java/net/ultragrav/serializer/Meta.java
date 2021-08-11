@@ -298,13 +298,8 @@ public class Meta implements GravSerializable {
         return new HashMap<>(meta);
     }
 
-    /**
-     * Represent this meta as a JSON string
-     *
-     * @return JSON String
-     */
-    public String asJson() {
-        return Json.make(meta).toString();
+    public JsonMeta toJsonMeta() {
+        return new JsonMeta(asMap());
     }
 
     @Override

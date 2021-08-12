@@ -7,16 +7,18 @@ import java.lang.reflect.Method;
  * Requires either a static method deserialize(JsonMeta) OR a constructor(JsonMeta)
  */
 public interface JsonMetaSerializable extends GravSerializable {
-    static Object deserializeObject(Class<? extends JsonMetaSerializable> clazz, GravSerializer serializer) {
-        JsonMeta meta = JsonMeta.deserialize(serializer);
+    static <T extends JsonMetaSerializable> T deserializeObject(Class<T> clazz, GravSerializer serializer) {
+        return deserializeObject(clazz, JsonMeta.deserialize(serializer));
+    }
 
+    static <T extends JsonMetaSerializable> T deserializeObject(Class<T> clazz, JsonMeta meta) {
         String className = clazz.getName();
 
         boolean c1 = false;
         try {
             try {
                 Method m = clazz.getMethod("deserialize", JsonMeta.class);
-                return m.invoke(null, meta);
+                return (T) m.invoke(null, meta);
             } catch (NoSuchMethodException ignored) {
             } catch (NullPointerException e) {
                 c1 = true;
@@ -24,7 +26,7 @@ public interface JsonMetaSerializable extends GravSerializable {
                 e.printStackTrace();
             }
             Constructor<?> constructor = clazz.getConstructor(JsonMeta.class);
-            return constructor.newInstance(meta);
+            return (T) constructor.newInstance(meta);
         } catch (Exception e) {
             if (!c1)
                 throw new ObjectDeserializationException("ERROR: Could NOT find a deserialization method for " + className, e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);

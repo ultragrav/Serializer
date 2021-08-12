@@ -8,22 +8,24 @@ import java.lang.reflect.Method;
  */
 public interface MetaSerializable extends GravSerializable {
     static Object deserializeObject(Class<? extends MetaSerializable> clazz, GravSerializer serializer) {
-        Meta meta = new Meta(serializer);
+        return deserializeObject(clazz, new Meta(serializer));
+    }
 
+    static <T extends MetaSerializable> T deserializeObject(Class<T> clazz, Meta meta) {
         String className = clazz.getName();
 
         boolean c1 = false;
         try {
             try {
                 Method m = clazz.getMethod("deserialize", Meta.class);
-                return m.invoke(null, meta);
+                return (T) m.invoke(null, meta);
             } catch (NoSuchMethodException ignored) {
             } catch (NullPointerException e) {
                 c1 = true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Constructor<?> constructor = clazz.getConstructor(Meta.class);
+            Constructor<T> constructor = clazz.getConstructor(Meta.class);
             return constructor.newInstance(meta);
         } catch (Exception e) {
             if (!c1)

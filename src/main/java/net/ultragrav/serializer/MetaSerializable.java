@@ -25,7 +25,7 @@ public interface MetaSerializable extends GravSerializable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Constructor<T> constructor = clazz.getConstructor(Meta.class);
+            Constructor<T> constructor = clazz.getDeclaredConstructor(Meta.class);
             return constructor.newInstance(meta);
         } catch (Exception e) {
             if (!c1)

@@ -25,7 +25,7 @@ public interface JsonMetaSerializable extends GravSerializable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Constructor<?> constructor = clazz.getConstructor(JsonMeta.class);
+            Constructor<?> constructor = clazz.getDeclaredConstructor(JsonMeta.class);
             return (T) constructor.newInstance(meta);
         } catch (Exception e) {
             if (!c1)

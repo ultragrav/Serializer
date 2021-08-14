@@ -55,7 +55,7 @@ public interface GravSerializable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Constructor<?> constructor = clazz.getConstructor(argumentTypes);
+            Constructor<?> constructor = clazz.getDeclaredConstructor(argumentTypes);
             return constructor.newInstance(arguments);
         } catch (ClassNotFoundException e) {
             throw new ObjectDeserializationException("Could not find class " + className, e, ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);

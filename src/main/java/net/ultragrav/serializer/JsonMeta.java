@@ -83,9 +83,11 @@ public class JsonMeta implements GravSerializable {
         lock.lock();
         try {
             T obj = get(path);
-            if (obj == null)
+            if (obj == null) {
                 set(path, defaultValue);
-            return defaultValue;
+                return defaultValue;
+            }
+            return obj;
         } finally {
             lock.unlock();
         }

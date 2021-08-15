@@ -1,7 +1,5 @@
 package net.ultragrav.serializer;
 
-import net.ultragrav.serializer.util.Json;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -50,9 +48,11 @@ public class Meta implements GravSerializable {
      *
      * @param json Json String
      * @return Meta
+     * @deprecated Use JsonMeta for handling JSON
      */
+    @Deprecated
     public static Meta fromJson(String json) {
-        return new Meta(Json.read(json).asMap());
+        return JsonMeta.fromJson(json).toMeta();
     }
 
     public Meta getMeta(String key) {

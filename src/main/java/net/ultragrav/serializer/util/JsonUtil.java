@@ -211,6 +211,10 @@ public class JsonUtil {
             } catch (NumberFormatException ignored) {
             }
             try {
+                return Long.parseLong(str);
+            } catch (NumberFormatException ignored) {
+            }
+            try {
                 return Double.parseDouble(str);
             } catch (NumberFormatException ex) {
                 throw new IllegalArgumentException("Invalid JSON number");

@@ -93,6 +93,14 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
+    public void remove(String path) {
+        set(path, null);
+    }
+
+    public void remove(String path, boolean markDirty) {
+        set(path, null, markDirty);
+    }
+
     public void set(String path, Object value) {
         set(path.split(delimiter), value);
     }
@@ -115,7 +123,12 @@ public class JsonMeta implements GravSerializable {
 
                 if (i == pathLength - 1) {
 
-                    Object prev = current.data.put(s, value);
+                    Object prev;
+                    if (value == null) {
+                        prev = current.data.remove(s);
+                    } else {
+                        prev = current.data.put(s, value);
+                    }
                     if (markDirty) {
                         current.markDirty(s);
                     }
@@ -446,7 +459,9 @@ public class JsonMeta implements GravSerializable {
             } else {
                 object = serializer.readObject();
             }
-            meta.data.put(key, object);
+            if (object != null) {
+                meta.data.put(key, object);
+            }
         }
 
         return meta;

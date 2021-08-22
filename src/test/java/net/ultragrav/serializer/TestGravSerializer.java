@@ -4,9 +4,7 @@ import net.ultragrav.serializer.compressors.StandardCompressor;
 import net.ultragrav.serializer.compressors.ZstdCompressor;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;

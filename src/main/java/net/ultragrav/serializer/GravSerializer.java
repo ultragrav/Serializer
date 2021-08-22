@@ -94,7 +94,7 @@ public class GravSerializer {
         this.used += size;
     }
 
-    private void ensureCapacity(int capacity) {
+    public void ensureCapacity(int capacity) {
         if (this.bytes.length >= capacity)
             return;
 

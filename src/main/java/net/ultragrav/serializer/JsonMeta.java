@@ -17,11 +17,15 @@ public class JsonMeta implements GravSerializable {
 
     private volatile ReentrantLock lock = new ReentrantLock();
 
-    private volatile boolean autoDirt;
+    private volatile boolean autoDirt = false;
 
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
     public JsonMeta() {
+    }
+
+    public JsonMeta(boolean useRecord) {
+        this.autoDirt = useRecord;
     }
 
     @SuppressWarnings("unchecked")
@@ -100,11 +104,15 @@ public class JsonMeta implements GravSerializable {
     }
 
     public <T> T getOrSet(String path, T defaultValue) {
+        return getOrSet(path, defaultValue, autoDirt);
+    }
+
+    public <T> T getOrSet(String path, T defaultValue, boolean markDirty) {
         lock.lock();
         try {
             T obj = get(path);
             if (obj == null) {
-                set(path, defaultValue);
+                set(path, defaultValue, markDirty);
                 return defaultValue;
             }
             return obj;
@@ -133,6 +141,9 @@ public class JsonMeta implements GravSerializable {
         set(path, value, autoDirt);
     }
 
+    /**
+     * Set a key to a value. Using markDirty=false will be faster.
+     */
     public void set(String[] path, Object value, boolean markDirty) { //Doesn't use recursion, may change later
         lock.lock();
         try {
@@ -524,21 +535,52 @@ public class JsonMeta implements GravSerializable {
 
     public static void main(String[] args) {
         JsonMeta meta = new JsonMeta();
-        meta.set("hey.one.two.three.num", 1);
-        meta.set("hey.one.two.three.abc", 1);
+        long ms = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
+            meta.set(new String[] {"" + i}, i, false);
+        }
+        ms = System.currentTimeMillis() - ms;
+        System.out.println(ms);
 
-        meta.set("hey.one.two.four.num", 2);
-        meta.set("hey.one.two.oof.yo", 2);
-        System.out.println(meta);
-        System.out.println("\n\n\n");
+        ms = System.currentTimeMillis();
 
-        meta.getRecord().clear();
+        GravSerializer serializer = new GravSerializer();
+        for (int i = 0; i < 1000000; i++) {
+            serializer.writeString("1");
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
 
-        JsonMeta test = new JsonMeta();
-        test.set("hey.one.two.three.num", 23);
-        test.set("hey.one.two.four", "hi");
-        meta.putAll(test);
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
 
-        System.out.println(meta.toYaml());
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+        }
+        ms = System.currentTimeMillis() - ms;
+        meta.serialize(serializer);
+        System.out.println(ms);
     }
 }

@@ -41,19 +41,6 @@ public class TestGravSerializer {
     }
 
     @Test
-    public void a() {
-        long ms = System.currentTimeMillis();
-        JsonMeta meta = new JsonMeta();
-        for (int i = 0; i < 100000; i++) {
-            meta.set(new String[] {"" + i}, i, false);
-        }
-        GravSerializer serializer = new GravSerializer();
-        meta.serialize(serializer);
-        ms = System.currentTimeMillis() - ms;
-        System.out.println(ms);
-    }
-
-    @Test
     public void testBooleanArrays() {
         Random rand = new Random();
         boolean[] bools = new boolean[1000000];

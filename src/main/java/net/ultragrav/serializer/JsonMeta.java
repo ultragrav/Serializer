@@ -17,6 +17,8 @@ public class JsonMeta implements GravSerializable {
 
     private volatile ReentrantLock lock = new ReentrantLock();
 
+    private volatile boolean autoDirt;
+
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
     public JsonMeta() {
@@ -31,6 +33,17 @@ public class JsonMeta implements GravSerializable {
 
     public JsonMeta(String delimiter) {
         this.delimiter = delimiter;
+    }
+
+    public boolean isAutoDirt() {
+        return autoDirt;
+    }
+
+    /**
+     * Whether to default to markDirt = true on operations.
+     */
+    public void setAutoDirt(boolean autoDirt) {
+        this.autoDirt = autoDirt;
     }
 
     public JsonMetaUpdateRecord getRecord() {
@@ -110,7 +123,7 @@ public class JsonMeta implements GravSerializable {
     }
 
     public void set(String[] path, Object value) {
-        set(path, value, true);
+        set(path, value, autoDirt);
     }
 
     public void set(String[] path, Object value, boolean markDirty) { //Doesn't use recursion, may change later

@@ -52,7 +52,20 @@ public class GravSerializer {
     }
 
     public GravSerializer(byte[] input) {
-        bytes = Arrays.copyOf(input, input.length);
+        this(input, true);
+    }
+
+    /**
+     * Create a serializer optionally not copying the array. This might be
+     * faster in exchange that the input array might be modified. I recommend
+     * only using this only when you're deserializing.
+     */
+    public GravSerializer(byte[] input, boolean copyArray) {
+        if (copyArray) {
+            bytes = Arrays.copyOf(input, input.length);
+        } else {
+            bytes = input;
+        }
         used = bytes.length;
     }
 

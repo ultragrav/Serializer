@@ -148,7 +148,6 @@ public class Meta implements GravSerializable {
             }
             if (o != null)
                 this.set(key, o);
-            return (T) o;
         }
         return (T) o;
     }

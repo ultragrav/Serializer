@@ -1,5 +1,6 @@
 package net.ultragrav.serializer;
 
+import lombok.val;
 import net.ultragrav.serializer.util.JsonUtil;
 
 import java.util.*;
@@ -8,7 +9,6 @@ import java.util.stream.Collectors;
 
 //TODO make thread-safe
 public class JsonMeta implements GravSerializable {
-
     private final Map<String, Object> data = new HashMap<>();
 
     private String delimiter = "\\.";
@@ -77,6 +77,13 @@ public class JsonMeta implements GravSerializable {
                     if (i != path.length - 1)
                         return null;
                     return (T) o;
+                }
+            }
+            if (current instanceof JsonMeta) {
+                try {
+                    return (T) current;
+                } catch(ClassCastException e) {
+                    return (T) current.asMap();
                 }
             }
             return (T) current;
@@ -151,7 +158,22 @@ public class JsonMeta implements GravSerializable {
                     }
 
                     if (value instanceof Map) {
-                        value = new JsonMeta((Map<String, Object>) value);
+                        Map<?, ?> vMap = (Map<?, ?>) value;
+                        if (vMap.size() == 0) {
+                            value = new JsonMeta();
+                        } else {
+                            JsonMeta submeta = new JsonMeta();
+                            for (Map.Entry<?, ?> ent : vMap.entrySet()) {
+                                if (ent.getKey() instanceof String) {
+                                    submeta.set((String) ent.getKey(), ent.getValue());
+                                } else {
+                                    submeta = null;
+                                    break;
+                                }
+                            }
+                            if (submeta != null)
+                                value = submeta;
+                        }
                     }
                     if (value instanceof Meta) {
                         value = new JsonMeta(((Meta) value).asMap());

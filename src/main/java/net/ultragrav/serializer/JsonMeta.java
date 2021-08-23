@@ -17,7 +17,7 @@ public class JsonMeta implements GravSerializable {
 
     private volatile ReentrantLock lock = new ReentrantLock();
 
-    private boolean markDirtyByDefault = false;
+    private boolean markDirtyByDefault = true;
 
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 

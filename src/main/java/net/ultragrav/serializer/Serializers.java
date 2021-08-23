@@ -6,6 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Serializers {
     private static final List<SerializerElement> SERIALIZERS = new ArrayList<>();
 
+    private static final Map<Class<?>, Serializer<?>> CUSTOM_SERIALIZERS = new HashMap<>();
+
     static {
         //0
         SERIALIZERS.add(new SerializerElement(String.class, new Serializer<String>() {
@@ -359,7 +361,7 @@ public class Serializers {
             public double[] deserialize(GravSerializer serializer, Object... args) {
                 int len = serializer.readInt();
                 double[] arr = new double[len];
-                for (int i = 0; i < len; i ++) {
+                for (int i = 0; i < len; i++) {
                     arr[i] = serializer.readDouble();
                 }
                 return arr;
@@ -392,7 +394,7 @@ public class Serializers {
             public char[] deserialize(GravSerializer serializer, Object... args) {
                 int len = serializer.readInt();
                 char[] arr = new char[len];
-                for (int i = 0; i < len; i ++) {
+                for (int i = 0; i < len; i++) {
                     arr[i] = serializer.readChar();
                 }
                 return arr;
@@ -423,17 +425,55 @@ public class Serializers {
                 return;
             }
         }
+        for (Class<?> clazz : CUSTOM_SERIALIZERS.keySet()) {
+            if (clazz.isInstance(obj)) {
+                serializer.writeByte((byte) 0xFF);
+                serializer.writeString(clazz.getName());
+                CUSTOM_SERIALIZERS.get(clazz).serialize(serializer, obj);
+                return;
+            }
+        }
         throw new IllegalArgumentException("Cannot serialize object of type: " + obj.getClass().getName());
     }
 
     public static Object deserializeObject(GravSerializer serializer, Object... args) {
-        byte type = serializer.readByte();
+        int type = serializer.readByte() & 0xFF; // Ensure unsigned byte
         if (type == 0) {
             return null;
+        }
+        if (type == 0xFF) {
+            Class<?> clazz;
+            try {
+                clazz = Class.forName(serializer.readString());
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException("Cannot deserialize object due to missing Custom Serializer class");
+            }
+
+            Serializer<?> ser = CUSTOM_SERIALIZERS.get(clazz);
+            if (ser == null) {
+                throw new IllegalArgumentException("Cannot deserialize object due to missing Serializer (Custom Serializer)");
+            }
+            return ser.deserialize(serializer, args);
         }
         if (type > SERIALIZERS.size()) {
             throw new IllegalArgumentException("No serializer found! Invalid object type: " + (type - 1));
         }
         return SERIALIZERS.get(type - 1).getSerializer().deserialize(serializer, args);
+    }
+
+    /**
+     * Register a custom serializer
+     * Use this for any API classes that you cannot edit
+     * Allows object to be serialized and deserialized
+     * after this call.
+     * <p>
+     * Note: Ensure this call happens before
+     * any deserialization of the object
+     *
+     * @param clazz      Class
+     * @param serializer Serializer
+     */
+    public static void registerSerializer(Class<?> clazz, Serializer<?> serializer) {
+        CUSTOM_SERIALIZERS.put(clazz, serializer);
     }
 }

@@ -17,15 +17,15 @@ public class JsonMeta implements GravSerializable {
 
     private volatile ReentrantLock lock = new ReentrantLock();
 
-    private volatile boolean autoDirt;
+    private volatile boolean autoDirt = false;
 
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
     public JsonMeta() {
     }
 
-    public JsonMeta(boolean autoDirt) {
-        this.autoDirt = autoDirt;
+    public JsonMeta(boolean useRecord) {
+        this.autoDirt = useRecord;
     }
 
     @SuppressWarnings("unchecked")
@@ -512,16 +512,53 @@ public class JsonMeta implements GravSerializable {
     }
 
     public static void main(String[] args) {
-        long ms = System.currentTimeMillis();
         JsonMeta meta = new JsonMeta();
-        for (int i = 0; i < 100000; i++) {
+        long ms = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
             meta.set(new String[] {"" + i}, i, false);
         }
         ms = System.currentTimeMillis() - ms;
+        System.out.println(ms);
+
+        ms = System.currentTimeMillis();
 
         GravSerializer serializer = new GravSerializer();
+        for (int i = 0; i < 1000000; i++) {
+            serializer.writeString("1");
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+
+            serializer.writeByte((byte) 0);
+            serializer.writeByte((byte) 2);
+            serializer.writeInt(1);
+        }
+        ms = System.currentTimeMillis() - ms;
         meta.serialize(serializer);
-//        ms = System.currentTimeMillis() - ms;
         System.out.println(ms);
     }
 }

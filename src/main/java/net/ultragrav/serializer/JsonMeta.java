@@ -55,7 +55,7 @@ public class JsonMeta implements GravSerializable {
                 JsonMeta m = (JsonMeta) o;
                 if (m.parent != this)
                     continue;
-                m.setMarkDirtyByDefault(value);
+                m.setMarkDirtyByDefaultRecursive(value);
             }
         }
         lock.unlock();

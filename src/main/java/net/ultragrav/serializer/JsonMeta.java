@@ -17,15 +17,19 @@ public class JsonMeta implements GravSerializable {
 
     private volatile ReentrantLock lock = new ReentrantLock();
 
-    private volatile boolean autoDirt = false;
+    private boolean markDirtyByDefault = false;
 
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
+    /**
+     * markDirtyByDefault defaults to false. You must set markDirtyByDefault to true if you
+     * want this JsonMeta object to automatically keep records (Mark dirty).
+     */
     public JsonMeta() {
     }
 
     public JsonMeta(boolean useRecord) {
-        this.autoDirt = useRecord;
+        this.markDirtyByDefault = useRecord;
     }
 
     @SuppressWarnings("unchecked")
@@ -39,15 +43,22 @@ public class JsonMeta implements GravSerializable {
         this.delimiter = delimiter;
     }
 
-    public boolean isAutoDirt() {
-        return autoDirt;
+    public boolean isMarkDirtyByDefault() {
+        return markDirtyByDefault;
     }
 
-    /**
-     * Whether to default to markDirt = true on operations.
-     */
-    public void setAutoDirt(boolean autoDirt) {
-        this.autoDirt = autoDirt;
+    public void setMarkDirtyByDefaultRecursive(boolean value) {
+        this.markDirtyByDefault = value;
+        lock.lock();
+        for (Object o : data.values()) {
+            if (o instanceof JsonMeta) {
+                JsonMeta m = (JsonMeta) o;
+                if (m.parent != this)
+                    continue;
+                m.setMarkDirtyByDefaultRecursive(value);
+            }
+        }
+        lock.unlock();
     }
 
     public JsonMetaUpdateRecord getRecord() {
@@ -104,7 +115,7 @@ public class JsonMeta implements GravSerializable {
     }
 
     public <T> T getOrSet(String path, T defaultValue) {
-        return getOrSet(path, defaultValue, autoDirt);
+        return getOrSet(path, defaultValue, markDirtyByDefault);
     }
 
     public <T> T getOrSet(String path, T defaultValue, boolean markDirty) {
@@ -138,7 +149,7 @@ public class JsonMeta implements GravSerializable {
     }
 
     public void set(String[] path, Object value) {
-        set(path, value, autoDirt);
+        set(path, value, markDirtyByDefault);
     }
 
     /**
@@ -266,6 +277,7 @@ public class JsonMeta implements GravSerializable {
 
         //Set lock
         child.lock = parent.lock;
+        child.markDirtyByDefault = parent.markDirtyByDefault;
 
         //Switch to the new lock
         childLock.unlock();

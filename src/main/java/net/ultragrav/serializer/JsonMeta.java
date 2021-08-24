@@ -17,10 +17,14 @@ public class JsonMeta implements GravSerializable {
 
     private volatile ReentrantLock lock = new ReentrantLock();
 
-    private boolean markDirtyByDefault = true;
+    private boolean markDirtyByDefault = false;
 
     private final JsonMetaUpdateRecord record = new JsonMetaUpdateRecord();
 
+    /**
+     * markDirtyByDefault defaults to false. You must set markDirtyByDefault to true if you
+     * want this JsonMeta object to automatically keep records (Mark dirty).
+     */
     public JsonMeta() {
     }
 
@@ -41,6 +45,20 @@ public class JsonMeta implements GravSerializable {
 
     public boolean isMarkDirtyByDefault() {
         return markDirtyByDefault;
+    }
+
+    public void setMarkDirtyByDefaultRecursive(boolean value) {
+        this.markDirtyByDefault = value;
+        lock.lock();
+        for (Object o : data.values()) {
+            if (o instanceof JsonMeta) {
+                JsonMeta m = (JsonMeta) o;
+                if (m.parent != this)
+                    continue;
+                m.setMarkDirtyByDefault(value);
+            }
+        }
+        lock.unlock();
     }
 
     public JsonMetaUpdateRecord getRecord() {

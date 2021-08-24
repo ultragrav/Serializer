@@ -2,6 +2,7 @@ package net.ultragrav.serializer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.*;
 
 public class Serializers {
     private static final List<SerializerElement> SERIALIZERS = new ArrayList<>();
@@ -398,6 +399,98 @@ public class Serializers {
                     arr[i] = serializer.readChar();
                 }
                 return arr;
+            }
+        }));
+        // 24
+        SERIALIZERS.add(new SerializerElement(AtomicBoolean.class, new Serializer<AtomicBoolean>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeBoolean(((AtomicBoolean) t).get());
+            }
+
+            @Override
+            public AtomicBoolean deserialize(GravSerializer serializer, Object... args) {
+                return new AtomicBoolean(serializer.readBoolean());
+            }
+        }));
+        // 25
+        SERIALIZERS.add(new SerializerElement(AtomicInteger.class, new Serializer<AtomicInteger>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeInt(((AtomicInteger) t).get());
+            }
+
+            @Override
+            public AtomicInteger deserialize(GravSerializer serializer, Object... args) {
+                return new AtomicInteger(serializer.readInt());
+            }
+        }));
+        // 26
+        SERIALIZERS.add(new SerializerElement(AtomicIntegerArray.class, new Serializer<AtomicIntegerArray>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                AtomicIntegerArray arr = (AtomicIntegerArray) t;
+                int len = arr.length();
+                serializer.writeInt(len);
+                for (int i = 0; i < len; i++) {
+                    serializer.writeInt(arr.get(i));
+                }
+            }
+
+            @Override
+            public AtomicIntegerArray deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                AtomicIntegerArray ret = new AtomicIntegerArray(len);
+                for (int i = 0; i < len; i++) {
+                    ret.set(i, serializer.readInt());
+                }
+                return ret;
+            }
+        }));
+        // 27
+        SERIALIZERS.add(new SerializerElement(AtomicLong.class, new Serializer<AtomicLong>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeLong(((AtomicLong) t).get());
+            }
+
+            @Override
+            public AtomicLong deserialize(GravSerializer serializer, Object... args) {
+                return new AtomicLong(serializer.readLong());
+            }
+        }));
+        // 28
+        SERIALIZERS.add(new SerializerElement(AtomicLongArray.class, new Serializer<AtomicLongArray>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                AtomicLongArray arr = (AtomicLongArray) t;
+                int len = arr.length();
+                serializer.writeInt(len);
+                for (int i = 0; i < len; i ++) {
+                    serializer.writeLong(arr.get(i));
+                }
+            }
+
+            @Override
+            public AtomicLongArray deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                AtomicLongArray ret = new AtomicLongArray(len);
+                for (int i = 0; i < len; i++) {
+                    ret.set(i, serializer.readLong());
+                }
+                return ret;
+            }
+        }));
+        // 29
+        SERIALIZERS.add(new SerializerElement(AtomicReference.class, new Serializer<AtomicReference<?>>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeObject(((AtomicReference<?>) t).get());
+            }
+
+            @Override
+            public AtomicReference<?> deserialize(GravSerializer serializer, Object... args) {
+                return new AtomicReference<>(serializer.readObject());
             }
         }));
     }

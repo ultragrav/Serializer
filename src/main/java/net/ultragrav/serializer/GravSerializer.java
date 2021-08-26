@@ -134,6 +134,10 @@ public class GravSerializer {
     }
 
     public void writeString(String str) {
+        if (str == null) {
+            writeInt(-1);
+            return;
+        }
         byte[] bts = str.getBytes();
         ensureCapacity(used + bts.length + 4);
         writeInt(bts.length);
@@ -428,6 +432,7 @@ public class GravSerializer {
 
     public String readString() {
         int size = readInt();
+        if (size == -1) return null;
         byte[] bites = new byte[size];
         for (int i = 0; i < size; i++) {
             bites[i] = readByte();

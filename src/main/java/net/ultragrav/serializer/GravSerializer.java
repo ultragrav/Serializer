@@ -12,7 +12,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 @SuppressWarnings("unchecked")
-public class GravSerializer {
+public class GravSerializer implements GravSerializable {
     private byte[] bytes = new byte[16]; //Default 16 byte capacity
     private int used = 0;
     private int reading = 0;
@@ -138,10 +138,14 @@ public class GravSerializer {
             writeInt(-1);
             return;
         }
-        byte[] bts = str.getBytes();
-        ensureCapacity(used + bts.length + 4);
-        writeInt(bts.length);
-        append(bts);
+        writeByteArray(str.getBytes());
+    }
+
+    public String readString() {
+        int size = readInt();
+        if (size == -1) return null;
+        byte[] bites = readBytes(size);
+        return new String(bites);
     }
 
     public void writeByteArray(byte[] bites) {
@@ -196,7 +200,6 @@ public class GravSerializer {
     public void writeFloat(float d) {
         writeFloat(d, false);
     }
-
     public void writeFloat(float d, boolean littleEndian) {
         writeInt(Float.floatToIntBits(d), littleEndian);
     }
@@ -204,7 +207,6 @@ public class GravSerializer {
     public void writeInt(int i) {
         writeInt(i, false);
     }
-
     public void writeInt(int i, boolean littleEndian) {
         byte[] bites = new byte[4];
 
@@ -226,7 +228,6 @@ public class GravSerializer {
             l >>>= 7;
         }
     }
-
     public long readVarInt() {
         long l = 0;
         int c = 0;
@@ -242,7 +243,6 @@ public class GravSerializer {
     public void writeChar(char ch) {
         writeVarInt((int) ch);
     }
-
     public char readChar() {
         return (char) (int) readVarInt();
     }
@@ -380,17 +380,23 @@ public class GravSerializer {
 
     public byte[] readByteArray() {
         int length = readInt();
-        byte[] bites = new byte[length];
-        for (int i = 0; i < length; i++) {
-            bites[i] = readByte();
-        }
-        return bites;
+        return readBytes(length);
     }
 
     public byte readByte() {
         if (reading >= used)
             throw new IllegalStateException("End of byte array reached (GravSerializer)");
         return bytes[reading++];
+    }
+
+    public byte[] readBytes(int len) {
+        if (reading + len > used) {
+            throw new IllegalStateException("Not enough bytes to read!");
+        }
+        byte[] ret = new byte[len];
+        System.arraycopy(bytes, reading, ret, 0, len);
+        reading += len;
+        return ret;
     }
 
     public boolean hasNext() {
@@ -430,16 +436,6 @@ public class GravSerializer {
         return out;
     }
 
-    public String readString() {
-        int size = readInt();
-        if (size == -1) return null;
-        byte[] bites = new byte[size];
-        for (int i = 0; i < size; i++) {
-            bites[i] = readByte();
-        }
-        return new String(bites);
-    }
-
     public String toString() {
         return Base64.getEncoder().encodeToString(toByteArray());
     }
@@ -469,5 +465,17 @@ public class GravSerializer {
         ser.writeFloat(0.05f, true);
         ser.writeFloat(0.1f, true);
         System.out.println(Arrays.toString(ser.toByteArray()));
+    }
+
+    public static GravSerializer deserialize(GravSerializer serializer) {
+        int length = serializer.readInt();
+        byte[] arr = serializer.readBytes(length);
+        return new GravSerializer(arr);
+    }
+
+    @Override
+    public void serialize(GravSerializer serializer) {
+        serializer.writeInt(used);
+        serializer.append(bytes, used);
     }
 }

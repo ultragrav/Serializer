@@ -1,23 +1,19 @@
 package net.ultragrav.serializer;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import net.ultragrav.serializer.util.ReflectionUtil;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Constructor;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestMetaSerializable {
-    private String randomString(int len) {
-        char[] valids = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        Random rand = ThreadLocalRandom.current();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < len; i++) {
-            builder.append(valids[rand.nextInt(valids.length)]);
-        }
-        return builder.toString();
-    }
+import static net.ultragrav.serializer.util.RandomUtil.*;
 
+public class TestMetaSerializable {
     private TestClassOne randomTestClass() {
         TestClassOne ret = new TestClassOne();
         ret.id = UUID.randomUUID();
@@ -43,6 +39,18 @@ public class TestMetaSerializable {
         ser.writeObject(test);
 
         TestClassOne res = ser.readObject();
+        assert Objects.equals(test, res);
+    }
+
+    @Test
+    public void testParameters() {
+        UUID id = UUID.randomUUID();
+        TestClassParams test = new TestClassParams(id, randomString(5));
+        GravSerializer ser = new GravSerializer();
+        ser.writeObject(test);
+
+        TestClassParams res = ser.readObject(id);
+
         assert Objects.equals(test, res);
     }
 
@@ -86,6 +94,44 @@ public class TestMetaSerializable {
         @Override
         public int hashCode() {
             return Objects.hash(id, name, created, value);
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class TestClassParams implements MetaSerializable {
+        private UUID id;
+        private String name;
+
+        public TestClassParams(Meta meta, UUID id) {
+            this.id = id;
+
+            this.name = meta.get("name");
+        }
+
+        @Override
+        public Meta serialize() {
+            Meta meta = new Meta();
+            meta.set("name", name);
+            return meta;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            TestClassParams that = (TestClassParams) o;
+
+            if (id != null ? !id.equals(that.id) : that.id != null) return false;
+            return name != null ? name.equals(that.name) : that.name == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id != null ? id.hashCode() : 0;
+            result = 31 * result + (name != null ? name.hashCode() : 0);
+            return result;
         }
     }
 }

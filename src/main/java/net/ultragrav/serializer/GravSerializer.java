@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
@@ -178,13 +177,13 @@ public class GravSerializer implements GravSerializable {
 
     public void writeLong(long l, boolean littleEndian) {
         byte[] bites = new byte[8];
-        if(!littleEndian) {
+        if (!littleEndian) {
             for (int i = 0; i < 8; i++) { //8 bytes in a long
                 bites[i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
             }
         } else {
             for (int i = 0; i < 8; i++) { //8 bytes in a long
-                bites[7-i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
+                bites[7 - i] = ((byte) (l >>> 8 * i & 255)); //Isolate then add each byte BTW it's >>> because i don't want to preserve the sign, since I'm working with bytes, not their number representations unsure if i need it to be >>> but it's safer to have it
             }
         }
         append(bites);
@@ -193,6 +192,7 @@ public class GravSerializer implements GravSerializable {
     public void writeDouble(double d) {
         writeDouble(d, false);
     }
+
     public void writeDouble(double d, boolean littleEndian) {
         writeLong(Double.doubleToRawLongBits(d), littleEndian);
     }
@@ -200,6 +200,7 @@ public class GravSerializer implements GravSerializable {
     public void writeFloat(float d) {
         writeFloat(d, false);
     }
+
     public void writeFloat(float d, boolean littleEndian) {
         writeInt(Float.floatToIntBits(d), littleEndian);
     }
@@ -207,15 +208,16 @@ public class GravSerializer implements GravSerializable {
     public void writeInt(int i) {
         writeInt(i, false);
     }
+
     public void writeInt(int i, boolean littleEndian) {
         byte[] bites = new byte[4];
 
-        if(!littleEndian) {
+        if (!littleEndian) {
             for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
                 bites[i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
         } else {
             for (int i1 = 0; i1 < 4; i1++) //4 bytes in int
-                bites[3-i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
+                bites[3 - i1] = ((byte) (i >>> 8 * i1 & 255)); //Isolate then add each byte
         }
         append(bites);
     }
@@ -228,13 +230,14 @@ public class GravSerializer implements GravSerializable {
             l >>>= 7;
         }
     }
+
     public long readVarInt() {
         long l = 0;
         int c = 0;
         byte b = (byte) 0xFF;
         while ((b & 0b10000000) != 0) {
             b = readByte();
-            l |= (b & 0b01111111L) << 7*c;
+            l |= (b & 0b01111111L) << 7 * c;
             c++;
         }
         return l;
@@ -243,6 +246,7 @@ public class GravSerializer implements GravSerializable {
     public void writeChar(char ch) {
         writeVarInt((int) ch);
     }
+
     public char readChar() {
         return (char) (int) readVarInt();
     }
@@ -340,7 +344,7 @@ public class GravSerializer implements GravSerializable {
 
     public long readLong(boolean littleEndian) {
         long out = 0L;
-        if(!littleEndian) {
+        if (!littleEndian) {
             for (int i = 0; i < 8; i++) {
                 out |= ((long) readByte() << (i * 8)) & ((long) 255 << (i * 8));
             }
@@ -390,13 +394,20 @@ public class GravSerializer implements GravSerializable {
     }
 
     public byte[] readBytes(int len) {
-        if (reading + len > used) {
-            throw new IllegalStateException("Not enough bytes to read!");
-        }
         byte[] ret = new byte[len];
-        System.arraycopy(bytes, reading, ret, 0, len);
-        reading += len;
+        int i;
+        if ((i = readBytes(ret)) != len) {
+            reading -= i;
+            throw new IllegalStateException("Insufficient bytes to read");
+        }
         return ret;
+    }
+
+    public int readBytes(byte[] buff) {
+        int count = Math.min(buff.length, used - reading);
+        System.arraycopy(bytes, reading, buff, 0, count);
+        reading += count;
+        return count;
     }
 
     public boolean hasNext() {
@@ -424,7 +435,7 @@ public class GravSerializer implements GravSerializable {
     public int readInt(boolean littleEndian) {
         int out = 0;
 
-        if(!littleEndian) {
+        if (!littleEndian) {
             for (int i = 0; i < 4; i++) {
                 out |= ((int) readByte() << (i * 8)) & (255 << (i * 8));
             }

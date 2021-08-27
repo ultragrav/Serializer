@@ -92,18 +92,31 @@ public class GravSerializer implements GravSerializable {
         }
     }
 
+    public long skip(long n) {
+        if (reading + n > used) {
+            int skipped = used - reading;
+            reading = used;
+            return skipped;
+        } else {
+            reading += n;
+            return n;
+        }
+    }
+
     public void append(byte[] arr) {
         append(arr, arr.length);
     }
 
-    public void append(byte[] arr, int size) {
-
-        if (size > arr.length)
+    public void append(byte[] arr, int len) {
+        append(arr, 0, len);
+    }
+    public void append(byte[] arr, int off, int len) {
+        if (len > arr.length)
             throw new IllegalArgumentException("Size cannot be larger than array size!");
 
-        ensureCapacity(used + size);
-        System.arraycopy(arr, 0, this.bytes, this.used, size);
-        this.used += size;
+        ensureCapacity(used + len);
+        System.arraycopy(arr, off, this.bytes, this.used, len);
+        this.used += len;
     }
 
     public void ensureCapacity(int capacity) {
@@ -402,10 +415,12 @@ public class GravSerializer implements GravSerializable {
         }
         return ret;
     }
-
-    public int readBytes(byte[] buff) {
-        int count = Math.min(buff.length, used - reading);
-        System.arraycopy(bytes, reading, buff, 0, count);
+    public int readBytes(byte[] buf) {
+        return readBytes(buf, 0, buf.length);
+    }
+    public int readBytes(byte[] buf, int off, int len) {
+        int count = Math.min(len, used - reading);
+        System.arraycopy(bytes, reading, buf, off, count);
         reading += count;
         return count;
     }

@@ -101,6 +101,10 @@ public class Meta implements GravSerializable {
     public void set(String key, Object object) {
         lock.writeLock().lock();
         try {
+            if (object == null) {
+                this.meta.remove(key);
+                return;
+            }
             if (object instanceof Meta) {
                 this.meta.put(key, ((Meta) object).meta);
             } else {

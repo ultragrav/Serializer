@@ -21,6 +21,8 @@ public interface MetaSerializable extends GravSerializable {
         args[0] = meta;
         System.arraycopy(otherArguments, 0, args, 1, otherArguments.length);
 
+//        System.out.println("Args: " + Arrays.toString(args));
+
         boolean c1 = false;
         try {
             try {
@@ -34,8 +36,10 @@ public interface MetaSerializable extends GravSerializable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
 //            Constructor<T> constructor = clazz.getDeclaredConstructor(Meta.class);
             Constructor<T> constructor = ReflectionUtil.getCompatibleConstructor(clazz, args);
+            if (constructor == null) throw new ObjectDeserializationException(ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
             return constructor.newInstance(args);
         } catch (Exception e) {
             if (!c1)

@@ -54,6 +54,24 @@ public class TestMetaSerializable {
         assert Objects.equals(test, res);
     }
 
+    @Test
+    public void testParameters2() {
+        UUID id = UUID.randomUUID();
+        TestClassParams test = new TestClassParams(id, randomString(5));
+
+        Meta other = new Meta();
+        other.set("test", test);
+
+        GravSerializer ser = new GravSerializer();
+        ser.writeObject(other);
+
+        Meta newOther = ser.readObject();
+
+        TestClassParams res = newOther.getOrSet("test", null, id);
+
+        assert Objects.equals(test, res);
+    }
+
     public static class TestClassOne implements MetaSerializable {
         private UUID id;
         private String name;

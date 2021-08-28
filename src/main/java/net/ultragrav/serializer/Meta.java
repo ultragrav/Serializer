@@ -70,18 +70,13 @@ public class Meta implements GravSerializable {
      */
     public Meta getOrSetMeta(String key, Meta defaultValue) {
         //Read lock is less expensive, so try first
-        lock.readLock().lock();
-        try {
-            Meta meta = getMeta(key);
-            if (meta != null)
-                return meta;
-        } finally {
-            lock.readLock().unlock();
-        }
+        Meta meta = getMeta(key);
+        if (meta != null)
+            return meta;
 
         lock.writeLock().lock();
         try {
-            Meta meta = getMeta(key);
+            meta = getMeta(key);
             if (meta == null) {
                 set(key, defaultValue);
                 return defaultValue;
@@ -150,6 +145,7 @@ public class Meta implements GravSerializable {
             } finally {
                 lock.readLock().unlock();
             }
+
             if (o != null)
                 this.set(key, o);
         }
@@ -169,18 +165,14 @@ public class Meta implements GravSerializable {
      * @return Existing value if present, otherwise {@code defaultValue}
      */
     public <T> T getOrSet(String key, T defaultValue, Object... constructionArgs) {
-        lock.readLock().lock();
-        try {
-            Object object = get(key, constructionArgs);
-            if (object != null)
-                return (T) object;
-        } finally {
-            lock.readLock().unlock();
+        Object object = get(key, constructionArgs);
+        if (object != null) {
+            return (T) object;
         }
 
         lock.writeLock().lock();
         try {
-            Object object = get(key, constructionArgs);
+            object = get(key, constructionArgs);
             if (object == null) {
                 set(key, defaultValue);
                 return defaultValue;

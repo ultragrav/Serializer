@@ -2,9 +2,19 @@
 A simple but versatile serialization system to convert objects and primitives into byte arrays or files.
 
 ## Installation
-Currently this project does not have a maven repository
-In order to use it, please install it into your local repository using:
-`gradlew install`
+### Maven:
+```xml
+<repository>
+    <id>UltraGrav</id>
+    <url>https://mvn.ultragrav.net</url>
+</repository>
+
+<dependency>
+    <groupId>net.ultragrav</groupId>
+    <artifactId>Serializer</artifactId>
+    <version>1.2.1</version>
+</dependency>
+```
 
 ## Examples
 ```java

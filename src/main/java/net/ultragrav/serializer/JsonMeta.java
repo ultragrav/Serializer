@@ -385,12 +385,12 @@ public class JsonMeta implements GravSerializable {
      */
     public String toJson() {
         StringBuilder builder = new StringBuilder();
-        builder.append("{");
+        builder.append("{\n");
         String objs = data.entrySet().stream()
                 .map(ent -> "\"" + ent.getKey() + "\": " + jsonStringify(ent.getValue()))
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(",\n"));
         builder.append(objs);
-        return builder.append("}").toString();
+        return builder.append("\n}").toString();
     }
 
     public String toYaml() {

@@ -5,26 +5,32 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public interface GravSerializable {
-    Map<String, String> relocationMappings = new HashMap<>();
+    Map<String, String> relocationMappings = new ConcurrentHashMap<>();
 
+    static void addRelocation(String k, String val) {
+        relocationMappings.put(k, val);
+    }
 
     static Object deserializeObject(net.ultragrav.serializer.GravSerializer serializer, Object... otherArguments) {
 
         String className = serializer.readString();
+
         // Do exact matches first
         for (Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
             if (className.equals(mapping.getKey())) {
                 className = mapping.getValue();
             }
         }
+
         // Then packages, etc.
         for (Map.Entry<String, String> mapping : relocationMappings.entrySet()) {
-            className = className.replace(Pattern.quote(mapping.getKey()), Matcher.quoteReplacement(mapping.getValue()));
+            className = className.replace(mapping.getKey(), mapping.getValue());
         }
 
         serializer = serializer.readSerializer(); //Read the buffer
@@ -75,4 +81,10 @@ public interface GravSerializable {
     }
 
     void serialize(net.ultragrav.serializer.GravSerializer serializer);
+
+    public static void main(String[] args) {
+        String className = "a.b.c.d";
+        className = className.replace("a.b", Matcher.quoteReplacement("l.f"));
+        System.out.println(className);
+    }
 }

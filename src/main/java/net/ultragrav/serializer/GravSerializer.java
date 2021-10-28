@@ -84,12 +84,12 @@ public class GravSerializer implements GravSerializable {
     }
 
     /**
-     * Resets serializer's writing position to the last writeMark
+     * Resets serializer's writing position to the last writeMark and sets the writeMark to the current write position.
      */
     public void writeReset() {
-        while (this.used != writeMark) {
-            this.used = writeMark;
-        }
+        int temp = used;
+        used = writeMark;
+        writeMark = temp;
     }
 
     public long skip(long n) {
@@ -131,10 +131,12 @@ public class GravSerializer implements GravSerializable {
     }
 
     /**
-     * Resets to the last marker (mark()), by default it is 0
+     * Resets to the last marker (mark()) and sets the mark to the current read position.
      */
     public void reset() {
-        this.reading = mark;
+        int temp = reading;
+        reading = mark;
+        mark = temp;
     }
 
     public int size() {

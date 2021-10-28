@@ -142,4 +142,15 @@ public class FieldSerializer {
             e.printStackTrace();
         }
     }
+
+    public static void main(String[] args) {
+        printBits(-12);
+    }
+
+    public static void printBits(long num) {
+        for (int i = 63; i >= 0; i--) {
+            System.out.print(num >>> i & 1);
+        }
+    }
+
 }

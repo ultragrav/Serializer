@@ -177,10 +177,9 @@ public class TestGravSerializer {
     public void testVarIntNegative() {
         GravSerializer ser = new GravSerializer();
 
-        long num = -40;
+        long num = (long) (Math.random() * Long.MIN_VALUE);
 
         ser.writeVarInt(num);
-        System.out.println(Arrays.toString(ser.toByteArray()));
 
         long var = ser.readVarInt();
 

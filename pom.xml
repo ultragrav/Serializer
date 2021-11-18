@@ -7,7 +7,7 @@
     <groupId>net.ultragrav</groupId>
     <artifactId>Serializer</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
 <!--    <modules>-->
 <!--        <module>SerializerSpigot</module>-->
 <!--    </modules>-->

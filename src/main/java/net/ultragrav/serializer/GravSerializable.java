@@ -35,6 +35,20 @@ public interface GravSerializable {
 
         serializer = serializer.readSerializer(); //Read the buffer
 
+        Class<?> clazz;
+        try {
+            clazz = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            throw new ObjectDeserializationException("Could not find class " + className, e, ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
+        }
+
+        if (MetaSerializable.class.isAssignableFrom(clazz)) {
+            return MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer, otherArguments);
+        }
+        if (JsonMetaSerializable.class.isAssignableFrom(clazz)) {
+            return JsonMetaSerializable.deserializeObject(clazz.asSubclass(JsonMetaSerializable.class), serializer, otherArguments);
+        }
+
         Class<?>[] argumentTypes = new Class<?>[otherArguments.length + 1];
         Object[] arguments = new Object[otherArguments.length + 1];
         argumentTypes[0] = net.ultragrav.serializer.GravSerializer.class;
@@ -45,13 +59,6 @@ public interface GravSerializable {
         }
         boolean c1 = false;
         try {
-            Class<?> clazz = Class.forName(className);
-            if (MetaSerializable.class.isAssignableFrom(clazz)) {
-                return MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer, otherArguments);
-            }
-            if (JsonMetaSerializable.class.isAssignableFrom(clazz)) {
-                return JsonMetaSerializable.deserializeObject(clazz.asSubclass(JsonMetaSerializable.class), serializer);
-            }
             try {
                 Method m = clazz.getMethod("deserialize", argumentTypes);
                 return m.invoke(null, arguments);
@@ -63,8 +70,6 @@ public interface GravSerializable {
             }
             Constructor<?> constructor = clazz.getDeclaredConstructor(argumentTypes);
             return constructor.newInstance(arguments);
-        } catch (ClassNotFoundException e) {
-            throw new ObjectDeserializationException("Could not find class " + className, e, ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
         } catch (Exception e) {
             if (!c1)
                 throw new ObjectDeserializationException("ERROR: Could NOT find a deserialization method for " + className, e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);

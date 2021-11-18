@@ -1,15 +1,19 @@
 package net.ultragrav.serializer;
 
-import lombok.val;
 import net.ultragrav.serializer.util.JsonUtil;
 
+import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 //TODO make thread-safe
 public class JsonMeta implements GravSerializable {
+    private static final int FORMAT_VERSION = 2;
+    private static final String SERIALIZED_PREFIX = "__$$";
+
     private final Map<String, Object> data = new HashMap<>();
+    public final Map<String, GravSerializer> toDeserialize = new HashMap<>();
 
     private String delimiter = "\\.";
     private String[] path = new String[0];
@@ -78,11 +82,15 @@ public class JsonMeta implements GravSerializable {
         return lock;
     }
 
-    public <T> T get(String path) {
-        return get(path.split(delimiter));
+    public <T> T get(String path, Object... constructionArgs) {
+        return get(path.split(delimiter), constructionArgs);
     }
 
     public <T> T get(String... path) {
+        return get(path, new Object[0]);
+    }
+
+    public <T> T get(String[] path, Object... constructionArgs) {
         lock.lock();
         try {
             JsonMeta current = this;
@@ -94,13 +102,21 @@ public class JsonMeta implements GravSerializable {
                 } else {
                     if (i != path.length - 1)
                         return null;
+                    if (o == null) {
+                        GravSerializer ser = current.toDeserialize.get(s);
+                        o = ser.readObject(constructionArgs);
+                        if (o != null) {
+                            current.data.put(s, o);
+                            current.toDeserialize.remove(s);
+                        }
+                    }
                     return (T) o;
                 }
             }
             if (current instanceof JsonMeta) {
                 try {
                     return (T) current;
-                } catch(ClassCastException e) {
+                } catch (ClassCastException e) {
                     return (T) current.asMap();
                 }
             }
@@ -114,14 +130,14 @@ public class JsonMeta implements GravSerializable {
         return get(path) != null;
     }
 
-    public <T> T getOrSet(String path, T defaultValue) {
-        return getOrSet(path, defaultValue, markDirtyByDefault);
+    public <T> T getOrSet(String path, T defaultValue, Object... constructionArgs) {
+        return getOrSet(path, defaultValue, markDirtyByDefault, constructionArgs);
     }
 
-    public <T> T getOrSet(String path, T defaultValue, boolean markDirty) {
+    public <T> T getOrSet(String path, T defaultValue, boolean markDirty, Object... constructionArgs) {
         lock.lock();
         try {
-            T obj = get(path);
+            T obj = get(path, constructionArgs);
             if (obj == null) {
                 set(path, defaultValue, markDirty);
                 return defaultValue;
@@ -194,7 +210,7 @@ public class JsonMeta implements GravSerializable {
                         }
                     }
                     if (value instanceof Meta) {
-                        value = new JsonMeta(((Meta) value).asMap());
+                        value = ((Meta) value).toJsonMeta();
                     }
 
                     //Link it if it's a JsonMeta
@@ -358,9 +374,37 @@ public class JsonMeta implements GravSerializable {
     public String toString() {
         return recursiveToString(0);
     }
+    public String toStringFull() {
+        return recursiveFullToString(0);
+    }
+
+    private String recursiveFullToString(int indentation) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < indentation; i++) {
+            indent.append("  ");
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("{").append("\n");
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            Object val = entry.getValue();
+            String valStr = val == null ? "null" :
+                    val instanceof JsonMeta ? ((JsonMeta) val).recursiveToString(indentation + 1) : val.toString();
+            builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
+        }
+        builder.append(indent).append("}");
+        if (!toDeserialize.isEmpty()) {
+            builder.append("\n").append(indent).append("toDeserialize: {\n");
+            for (Map.Entry<String, GravSerializer> toD : toDeserialize.entrySet()) {
+                builder.append(indent).append("  ").append(toD.getKey()).append(": ").append(new String(toD.getValue().toByteArray())).append("\n");
+            }
+            builder.append(indent).append("}");
+        }
+
+        return builder.toString();
+    }
 
     private String recursiveToString(int indentation) {
-
         StringBuilder indent = new StringBuilder();
         for (int i = 0; i < indentation; i++) {
             indent.append("  ");
@@ -391,6 +435,59 @@ public class JsonMeta implements GravSerializable {
                 .collect(Collectors.joining(",\n"));
         builder.append(objs);
         return builder.append("\n}").toString();
+    }
+
+    /**
+     * Convert this JsonMeta to a JsonMeta with only JSON-supported types (serialize all other objects as base-64)
+     *
+     * @return JSON-supported JsonMeta
+     */
+    public JsonMeta toValidJson() {
+        JsonMeta ret = new JsonMeta(markDirtyByDefault);
+        for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+            if (ent.getValue() == null)
+                continue;
+            if (ent.getValue() instanceof String)
+                ret.set(ent.getKey(), ent.getValue());
+            else if (ent.getValue() instanceof Number)
+                ret.set(ent.getKey(), ent.getValue());
+            else if (ent.getValue() instanceof List)
+                ret.set(ent.getKey(), ent.getValue());
+            else if (ent.getValue() instanceof JsonMeta)
+                ret.set(ent.getKey(), ((JsonMeta) ent.getValue()).toValidJson());
+            else {
+                GravSerializer ser = new GravSerializer();
+                ser.writeObject(ent.getValue());
+                ret.set(SERIALIZED_PREFIX + ent.getKey(), ser.toString());
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Convert any JSON validifications from {@link JsonMeta#toValidJson()} back to normal java objects
+     *
+     * @return Parsed JsonMeta
+     */
+    public JsonMeta fromValidJson() {
+        JsonMeta ret = new JsonMeta(markDirtyByDefault);
+        for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+            if (!ent.getKey().startsWith(SERIALIZED_PREFIX)) {
+                ret.set(ent.getKey(), ent.getValue());
+                continue;
+            }
+
+            if (!(ent.getValue() instanceof String)) {
+                throw new IllegalStateException("Found non-string serialization-key");
+            }
+
+            String realKey = ent.getKey().substring(SERIALIZED_PREFIX.length());
+            String obj = ((String) ent.getValue());
+            GravSerializer ser = new GravSerializer(obj);
+            Object value = ser.readObject();
+            ret.set(realKey, value);
+        }
+        return ret;
     }
 
     public String toYaml() {
@@ -466,6 +563,10 @@ public class JsonMeta implements GravSerializable {
     public void serialize(GravSerializer serializer, boolean reduced) {
         lock.lock();
         try {
+            serializer.writeByte((byte) 2);
+
+            serializer.writeInt(FORMAT_VERSION);
+
             int len = reduced ? record.updatedFields.size() : this.data.size();
 
             serializer.writeBoolean(reduced); //Probably not needed but who cares about an extra couple bytes
@@ -496,7 +597,14 @@ public class JsonMeta implements GravSerializable {
         } else {
             serializer.writeByte((byte) 1);
             serializer.writeString(key);
+            serializer.writeMark();
+            serializer.writeInt(0);
+            int pos = serializer.size();
             serializer.writeObject(val);
+            pos = serializer.size() - pos;
+            serializer.writeReset();
+            serializer.writeInt(pos);
+            serializer.writeReset();
         }
     }
 
@@ -504,8 +612,18 @@ public class JsonMeta implements GravSerializable {
         JsonMeta meta = new JsonMeta();
 
         //No need to use lock
+        byte disc = serializer.readByte();
 
-        boolean reduced = serializer.readBoolean();
+        int version = 1;
+        boolean reduced = false;
+
+        if (disc == 2) {
+            version = serializer.readInt();
+            reduced = serializer.readBoolean();
+        } else {
+            reduced = disc == 1;
+        }
+
         int len = serializer.readInt();
 
         for (int i = 0; i < len; i++) {
@@ -515,7 +633,22 @@ public class JsonMeta implements GravSerializable {
             if (type == 0) {
                 object = JsonMeta.deserialize(serializer);
             } else {
-                object = serializer.readObject();
+                int sl = -1;
+                if (version >= 2)
+                    sl = serializer.readInt();
+
+                serializer.mark();
+                try {
+                    object = serializer.readObject();
+                } catch (ObjectDeserializationException ex) {
+                    if (version >= 2) {
+                        serializer.reset();
+                        meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
+                        continue;
+                    } else {
+                        throw new UnsupportedOperationException("Cannot create toDeserialize for data serialized before version 2.");
+                    }
+                }
             }
             if (object != null) {
                 meta.data.put(key, object);
@@ -543,56 +676,5 @@ public class JsonMeta implements GravSerializable {
 
     public static JsonMeta fromJson(String str) {
         return JsonUtil.readJson(str);
-    }
-
-    public static void main(String[] args) {
-        JsonMeta meta = new JsonMeta();
-        long ms = System.currentTimeMillis();
-        for (int i = 0; i < 1000000; i++) {
-            meta.set(new String[] {"" + i}, i, false);
-        }
-        ms = System.currentTimeMillis() - ms;
-        System.out.println(ms);
-
-        ms = System.currentTimeMillis();
-
-        GravSerializer serializer = new GravSerializer();
-        for (int i = 0; i < 1000000; i++) {
-            serializer.writeString("1");
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-
-            serializer.writeByte((byte) 0);
-            serializer.writeByte((byte) 2);
-            serializer.writeInt(1);
-        }
-        ms = System.currentTimeMillis() - ms;
-        meta.serialize(serializer);
-        System.out.println(ms);
     }
 }

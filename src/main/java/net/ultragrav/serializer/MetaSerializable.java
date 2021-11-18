@@ -39,6 +39,7 @@ public interface MetaSerializable extends GravSerializable {
 
 //            Constructor<T> constructor = clazz.getDeclaredConstructor(Meta.class);
             Constructor<T> constructor = ReflectionUtil.getCompatibleConstructor(clazz, args);
+//            System.out.println("Constructor: " + constructor);
             if (constructor == null) throw new ObjectDeserializationException(ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
             return constructor.newInstance(args);
         } catch (Exception e) {

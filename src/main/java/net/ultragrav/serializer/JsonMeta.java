@@ -104,10 +104,12 @@ public class JsonMeta implements GravSerializable {
                         return null;
                     if (o == null) {
                         GravSerializer ser = current.toDeserialize.get(s);
-                        o = ser.readObject(constructionArgs);
-                        if (o != null) {
-                            current.data.put(s, o);
-                            current.toDeserialize.remove(s);
+                        if (ser != null) {
+                            o = ser.readObject(constructionArgs);
+                            if (o != null) {
+                                current.data.put(s, o);
+                                current.toDeserialize.remove(s);
+                            }
                         }
                     }
                     return (T) o;

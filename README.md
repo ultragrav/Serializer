@@ -12,7 +12,7 @@ A simple but versatile serialization system to convert objects and primitives in
 <dependency>
     <groupId>net.ultragrav</groupId>
     <artifactId>Serializer</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
 </dependency>
 ```
 

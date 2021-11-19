@@ -86,10 +86,6 @@ public class JsonMeta implements GravSerializable {
         return get(path.split(delimiter), constructionArgs);
     }
 
-    public <T> T get(String... path) {
-        return get(path, new Object[0]);
-    }
-
     public <T> T get(String[] path, Object... constructionArgs) {
         lock.lock();
         try {

@@ -1,6 +1,7 @@
 package net.ultragrav.serializer;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +70,7 @@ public class TestJsonMetaSerializable {
         assert Objects.equals(test, res);
     }
 
+    @EqualsAndHashCode
     public static class TestClassOne implements JsonMetaSerializable {
         private UUID id;
         private String name;
@@ -94,26 +96,11 @@ public class TestJsonMetaSerializable {
             ret.set("value", value);
             return ret;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            TestClassOne that = (TestClassOne) o;
-            return created == that.created &&
-                    value == that.value &&
-                    Objects.equals(id, that.id) &&
-                    Objects.equals(name, that.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, name, created, value);
-        }
     }
 
     @Getter
     @AllArgsConstructor
+    @EqualsAndHashCode
     public static class TestClassParams implements JsonMetaSerializable {
         private UUID id;
         private String name;
@@ -129,24 +116,6 @@ public class TestJsonMetaSerializable {
             JsonMeta meta = new JsonMeta();
             meta.set("name", name);
             return meta;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            TestClassParams that = (TestClassParams) o;
-
-            if (id != null ? !id.equals(that.id) : that.id != null) return false;
-            return name != null ? name.equals(that.name) : that.name == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = id != null ? id.hashCode() : 0;
-            result = 31 * result + (name != null ? name.hashCode() : 0);
-            return result;
         }
     }
 }

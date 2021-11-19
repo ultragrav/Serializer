@@ -33,7 +33,6 @@ public interface JsonMetaSerializable extends GravSerializable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.println("Args: " + Arrays.toString(args));
             Constructor<T> constructor = ReflectionUtil.getCompatibleConstructor(clazz, args);
             return (T) constructor.newInstance(args);
         } catch (Exception e) {

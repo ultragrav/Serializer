@@ -154,22 +154,22 @@ public class JsonMeta implements GravSerializable {
         set(path, null, markDirty);
     }
 
-    public void set(String path, Object value) {
-        set(path.split(delimiter), value);
+    public JsonMeta set(String path, Object value) {
+        return set(path.split(delimiter), value);
     }
 
-    public void set(String path, Object value, boolean markDirty) {
-        set(path.split(delimiter), value, markDirty);
+    public JsonMeta set(String path, Object value, boolean markDirty) {
+        return set(path.split(delimiter), value, markDirty);
     }
 
-    public void set(String[] path, Object value) {
-        set(path, value, markDirtyByDefault);
+    public JsonMeta set(String[] path, Object value) {
+        return set(path, value, markDirtyByDefault);
     }
 
     /**
      * Set a key to a value. Using markDirty=false will be faster.
      */
-    public void set(String[] path, Object value, boolean markDirty) { //Doesn't use recursion, may change later
+    public JsonMeta set(String[] path, Object value, boolean markDirty) { //Doesn't use recursion, may change later
         lock.lock();
         try {
             JsonMeta current = this;
@@ -225,11 +225,7 @@ public class JsonMeta implements GravSerializable {
                             }
                         }
                     }
-
-                    return;
-                }
-
-                if (!(o instanceof JsonMeta)) {
+                } else if (!(o instanceof JsonMeta)) {
                     //Create new json meta at specific path
                     JsonMeta next = new JsonMeta(delimiter);
 
@@ -245,6 +241,7 @@ public class JsonMeta implements GravSerializable {
         } finally {
             lock.unlock();
         }
+        return this;
     }
 
     public void putAll(JsonMeta meta) {

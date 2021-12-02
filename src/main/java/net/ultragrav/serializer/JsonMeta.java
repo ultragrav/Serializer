@@ -627,6 +627,7 @@ public class JsonMeta implements GravSerializable {
             Object object;
             if (type == 0) {
                 object = JsonMeta.deserialize(serializer);
+                link(meta, (JsonMeta) object, key); // Bug fix: parent was not being set on deserialization.
             } else {
                 int sl = -1;
                 if (version >= 2)

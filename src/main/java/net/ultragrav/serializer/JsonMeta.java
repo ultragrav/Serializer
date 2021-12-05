@@ -111,14 +111,11 @@ public class JsonMeta implements GravSerializable {
                     return (T) o;
                 }
             }
-            if (current instanceof JsonMeta) {
-                try {
-                    return (T) current;
-                } catch (ClassCastException e) {
-                    return (T) current.asMap();
-                }
+            try {
+                return (T) current;
+            } catch (ClassCastException e) {
+                return (T) current.asMap();
             }
-            return (T) current;
         } finally {
             lock.unlock();
         }
@@ -178,16 +175,7 @@ public class JsonMeta implements GravSerializable {
                 Object o = current.data.get(s);
 
                 if (i == pathLength - 1) {
-
                     Object prev;
-                    if (value == null) {
-                        prev = current.data.remove(s);
-                    } else {
-                        prev = current.data.put(s, value);
-                    }
-                    if (markDirty) {
-                        current.markDirty(s);
-                    }
 
                     if (value instanceof Map) {
                         Map<?, ?> vMap = (Map<?, ?>) value;
@@ -209,6 +197,15 @@ public class JsonMeta implements GravSerializable {
                     }
                     if (value instanceof Meta) {
                         value = ((Meta) value).toJsonMeta();
+                    }
+
+                    if (value == null) {
+                        prev = current.data.remove(s);
+                    } else {
+                        prev = current.data.put(s, value);
+                    }
+                    if (markDirty) {
+                        current.markDirty(s);
                     }
 
                     //Link it if it's a JsonMeta
@@ -288,7 +285,7 @@ public class JsonMeta implements GravSerializable {
 
         //Set lock
         child.lock = parent.lock;
-        child.markDirtyByDefault = parent.markDirtyByDefault;
+        child.setMarkDirtyByDefaultRecursive(parent.markDirtyByDefault);
 
         //Switch to the new lock
         childLock.unlock();
@@ -665,6 +662,18 @@ public class JsonMeta implements GravSerializable {
         });
         return ret;
     }
+    public Map<String, Object> asFlatMap() {
+        Map<String, Object> ret = new HashMap<>();
+        this.data.forEach((k, v) -> {
+            if (v instanceof JsonMeta) {
+                Map<String, Object> fm = ((JsonMeta) v).asFlatMap();
+                fm.forEach((k2, v2) -> ret.put(k + '.' + k2, v2));
+            } else {
+                ret.put(k, v);
+            }
+        });
+        return ret;
+    }
 
     public Meta toMeta() {
         return new Meta(asMap());
@@ -672,5 +681,9 @@ public class JsonMeta implements GravSerializable {
 
     public static JsonMeta fromJson(String str) {
         return JsonUtil.readJson(str);
+    }
+
+    public JsonMeta copy() {
+        return new JsonMeta(asMap());
     }
 }

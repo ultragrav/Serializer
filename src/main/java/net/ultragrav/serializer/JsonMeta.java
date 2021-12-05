@@ -86,6 +86,10 @@ public class JsonMeta implements GravSerializable {
         return get(path.split(delimiter), constructionArgs);
     }
 
+    public <K, V> Map<K, V> getMap(String path) {
+        return (Map<K, V>) this.<JsonMeta>get(path).asMap();
+    }
+
     public <T> T get(String[] path, Object... constructionArgs) {
         lock.lock();
         try {
@@ -111,11 +115,11 @@ public class JsonMeta implements GravSerializable {
                     return (T) o;
                 }
             }
-            try {
+//            try {
                 return (T) current;
-            } catch (ClassCastException e) {
-                return (T) current.asMap();
-            }
+//            } catch (ClassCastException e) {
+//                return (T) current.asMap();
+//            }
         } finally {
             lock.unlock();
         }

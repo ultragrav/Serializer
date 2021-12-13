@@ -179,6 +179,22 @@ public class GravSerializer implements GravSerializable {
         this.bytes[used++] = bite;
     }
 
+    public int getReadPosition() {
+        return reading;
+    }
+
+    public void setReadPosition(int pos) {
+        reading = pos;
+    }
+
+    public int getWritePosition() {
+        return used;
+    }
+
+    public void setWritePosition(int pos) {
+        used = pos;
+    }
+
     /**
      * Returns the amount of remaining bytes
      */

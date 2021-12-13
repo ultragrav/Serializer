@@ -593,14 +593,22 @@ public class JsonMeta implements GravSerializable {
         } else {
             serializer.writeByte((byte) 1);
             serializer.writeString(key);
-            serializer.writeMark();
+
+            int sizePos = serializer.getWritePosition();
+
             serializer.writeInt(0);
+
             int pos = serializer.size();
+
             serializer.writeObject(val);
-            pos = serializer.size() - pos;
-            serializer.writeReset();
-            serializer.writeInt(pos);
-            serializer.writeReset();
+
+            int size = serializer.size() - pos; // Could be replaced by end - pos.
+
+            int end = serializer.getWritePosition();
+
+            serializer.setWritePosition(sizePos);
+            serializer.writeInt(size);
+            serializer.setWritePosition(end);
         }
     }
 

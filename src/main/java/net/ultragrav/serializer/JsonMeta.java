@@ -91,8 +91,13 @@ public class JsonMeta implements GravSerializable {
         return get(path.split(delimiter), constructionArgs);
     }
 
+    @SuppressWarnings("unchecked")
     public <K, V> Map<K, V> getMap(String path) {
-        return (Map<K, V>) this.<JsonMeta>get(path).asMap();
+        try {
+            return this.get(path);
+        } catch(ClassCastException ex) {
+            return (Map<K, V>) this.<JsonMeta>get(path).asMap();
+        }
     }
 
     public <T> T get(String[] path, Object... constructionArgs) {

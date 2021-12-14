@@ -534,11 +534,23 @@ public class JsonMeta implements GravSerializable {
             valStr = "[" + ((List<?>) obj).stream().map(JsonMeta::jsonStringify)
                     .collect(Collectors.joining(", ")) + "]";
         } else if (obj instanceof String) {
-            return "\"" + obj + "\"";
+            return "\"" + jsonEscape((String) obj) + "\"";
         } else {
             valStr = obj.toString();
         }
         return valStr;
+    }
+
+    private static String jsonEscape(String raw) {
+        String escaped = raw;
+        escaped = escaped.replace("\\", "\\\\");
+        escaped = escaped.replace("\"", "\\\"");
+        escaped = escaped.replace("\b", "\\b");
+        escaped = escaped.replace("\f", "\\f");
+        escaped = escaped.replace("\n", "\\n");
+        escaped = escaped.replace("\r", "\\r");
+        escaped = escaped.replace("\t", "\\t");
+        return escaped;
     }
 
     public JsonMeta reduce() {

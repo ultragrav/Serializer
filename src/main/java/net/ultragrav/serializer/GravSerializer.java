@@ -110,6 +110,7 @@ public class GravSerializer implements GravSerializable {
     public void append(byte[] arr, int len) {
         append(arr, 0, len);
     }
+
     public void append(byte[] arr, int off, int len) {
         if (len > arr.length)
             throw new IllegalArgumentException("Size cannot be larger than array size!");
@@ -179,18 +180,30 @@ public class GravSerializer implements GravSerializable {
         this.bytes[used++] = bite;
     }
 
+    /**
+     * Returns the current read position of the buffer.
+     */
     public int getReadPosition() {
         return reading;
     }
 
+    /**
+     * Sets the current read position of the buffer.
+     */
     public void setReadPosition(int pos) {
         reading = pos;
     }
 
+    /**
+     * Returns the used bytes position of the buffer.
+     */
     public int getWritePosition() {
         return used;
     }
 
+    /**
+     * Sets the used bytes position of the buffer.
+     */
     public void setWritePosition(int pos) {
         used = pos;
     }
@@ -433,9 +446,11 @@ public class GravSerializer implements GravSerializable {
         }
         return ret;
     }
+
     public int readBytes(byte[] buf) {
         return readBytes(buf, 0, buf.length);
     }
+
     public int readBytes(byte[] buf, int off, int len) {
         int count = Math.min(len, used - reading);
         System.arraycopy(bytes, reading, buf, off, count);

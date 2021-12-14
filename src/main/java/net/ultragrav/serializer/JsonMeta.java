@@ -4,6 +4,7 @@ import net.ultragrav.serializer.util.JsonUtil;
 
 import java.sql.PreparedStatement;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,7 @@ public class JsonMeta implements GravSerializable {
     private String[] path = new String[0];
     private JsonMeta parent = null;
 
-    private volatile ReentrantLock lock = new ReentrantLock();
+    private final RefocusableLock lock = new RefocusableLock(this);
 
     private boolean markDirtyByDefault = false;
 
@@ -45,6 +46,10 @@ public class JsonMeta implements GravSerializable {
 
     public JsonMeta(String delimiter) {
         this.delimiter = delimiter;
+    }
+
+    public JsonMeta getParent() {
+        return parent;
     }
 
     public boolean isMarkDirtyByDefault() {
@@ -78,7 +83,7 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
-    public ReentrantLock getLock() {
+    public RefocusableLock getLock() {
         return lock;
     }
 
@@ -179,6 +184,8 @@ public class JsonMeta implements GravSerializable {
                 Object o = current.data.get(s);
 
                 if (i == pathLength - 1) {
+
+                    // Setting the value on current now.
                     Object prev;
 
                     if (value instanceof Map) {
@@ -284,27 +291,27 @@ public class JsonMeta implements GravSerializable {
 
         // Must lock with child's lock, because if the child's lock is already held while we set the child's lock to a new one,
         // then the holder won't be able to unlock the previous lock
-        ReentrantLock childLock = child.lock;
-        childLock.lock();
 
-        //Set lock
-        child.lock = parent.lock;
-        child.setMarkDirtyByDefaultRecursive(parent.markDirtyByDefault);
-
-        //Switch to the new lock
-        childLock.unlock();
         parent.lock.lock();
 
-        //Set paths
-        child.path = currentPath;
-        child.parent = parent;
+        child.lock.lock();
 
-        //Set record's children
+        child.setMarkDirtyByDefaultRecursive(parent.markDirtyByDefault);
+
+        // Switch to the new lock
+        Lock current = child.lock.getCurrentLock();
+        child.parent = parent;
+        current.unlock();
+
+        // Set paths
+        child.path = currentPath;
+
+        // Set record's children
         parent.record.children.add(child.record);
 
-        //Unlock
-        parent.lock.unlock();
+        // Unlock
 
+        parent.lock.unlock();
     }
 
     private void markDirty(String key) {

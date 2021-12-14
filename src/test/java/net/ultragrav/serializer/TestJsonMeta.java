@@ -3,6 +3,7 @@ package net.ultragrav.serializer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestJsonMeta {
     @Test
@@ -30,5 +31,61 @@ public class TestJsonMeta {
         assert Objects.equals(parent.get("child1.one"), 1);
         assert Objects.equals(parent.get("child1.two"), "2");
         assert Objects.equals(parent.get("child2.nested"), "Nested test");
+    }
+
+    @Test
+    public void testConcurrencyBasic() {
+        JsonMeta mother = new JsonMeta();
+        JsonMeta father = new JsonMeta();
+        JsonMeta child = new JsonMeta();
+
+        String key = "key";
+
+        mother.set(key, child);
+
+        AtomicBoolean aliceFinished = new AtomicBoolean();
+        AtomicBoolean bobFinished = new AtomicBoolean();
+
+        Thread alice = new Thread(() -> {
+            // Alice will be switching the child between the two parents.
+            boolean withMother = true;
+            for (int i = 0; i < 100000; i++) {
+                if (withMother) {
+                    // Set to father.
+                    father.set(key, child);
+                    withMother = false;
+                } else {
+                    // Set to mother.
+                    mother.set(key, child);
+                    withMother = true;
+                }
+            }
+            aliceFinished.set(true);
+        });
+
+        Thread bob = new Thread(() -> {
+            // Bob will continuously be setting a value in the child.
+            for (int i = 0; i < 100000; i++) {
+                child.set("value", "value");
+            }
+            bobFinished.set(true);
+        });
+
+        alice.start();
+        bob.start();
+
+        try {
+            Thread.sleep(400);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (!aliceFinished.get() && bobFinished.get()) {
+            throw new RuntimeException("Bob finished, Alice did not!");
+        } else if (aliceFinished.get() && !bobFinished.get()) {
+            throw new RuntimeException("Alice finished, Bob did not!");
+        } else if (!aliceFinished.get() && !bobFinished.get()) {
+            throw new RuntimeException("Neither Alice nor Bob finished!");
+        }
     }
 }

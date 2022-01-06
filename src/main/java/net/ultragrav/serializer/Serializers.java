@@ -149,7 +149,7 @@ public class Serializers {
             @Override
             public List<?> deserialize(GravSerializer serializer, Object... args) {
                 int size = serializer.readInt();
-                List<Object> l = new ArrayList<>();
+                List<Object> l = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
                     l.add(deserializeObject(serializer, args));
                 }
@@ -506,8 +506,8 @@ public class Serializers {
 
             @Override
             public Set<?> deserialize(GravSerializer serializer, Object... args) {
-                Set<Object> ret = new HashSet<>();
                 int len = serializer.readInt();
+                Set<Object> ret = new HashSet<>(len);
                 for (int i = 0; i < len; i++) {
                     ret.add(deserializeObject(serializer, args));
                 }

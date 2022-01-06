@@ -493,6 +493,27 @@ public class Serializers {
                 return new AtomicReference<>(serializer.readObject());
             }
         }));
+        // 30
+        SERIALIZERS.add(new SerializerElement(Set.class, new Serializer<Set<?>>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                Set<?> set = (Set<?>) t;
+                serializer.writeInt(set.size());
+                for (Object o : set) {
+                    serializeObject(serializer, o);
+                }
+            }
+
+            @Override
+            public Set<?> deserialize(GravSerializer serializer, Object... args) {
+                Set<Object> ret = new HashSet<>();
+                int len = serializer.readInt();
+                for (int i = 0; i < len; i++) {
+                    ret.add(deserializeObject(serializer, args));
+                }
+                return ret;
+            }
+        }));
     }
 
     public static boolean canSerialize(Class<?> clazz) {

@@ -108,7 +108,7 @@ public class Serializers {
             @Override
             public Map<?, ?> deserialize(GravSerializer serializer, Object... args) {
                 int size = serializer.readInt();
-                Map<Object, Object> map = new ConcurrentHashMap<>();
+                Map<Object, Object> map = new ConcurrentHashMap<>(size);
                 for (int i = 0; i < size; i++) {
                     Map.Entry<?, ?> entry = (Map.Entry<?, ?>) deserializeObject(serializer);
                     if (entry == null || entry.getValue() == null) {

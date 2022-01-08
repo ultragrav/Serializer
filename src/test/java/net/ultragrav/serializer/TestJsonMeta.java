@@ -88,4 +88,30 @@ public class TestJsonMeta {
             throw new RuntimeException("Neither Alice nor Bob finished!");
         }
     }
+
+    @Test
+    public void testPutAll() {
+        JsonMeta testOne = new JsonMeta(true);
+        testOne.getOrSet("stats.Bedwars", new JsonMeta()).set("Experience", 500);
+
+        JsonMeta testTwo = testOne.copy();
+
+        testOne.getRecord().clear();
+
+        testOne.getOrSet("stats.Bedwars", new JsonMeta()).set("Test2", "Test");
+
+        JsonMeta reduced = testOne.reduce();
+
+
+        testTwo.putAll(reduced);
+        System.out.println(testTwo);
+    }
+
+    @Test
+    public void testFluidTypes() {
+        JsonMeta testOne = new JsonMeta(true);
+        testOne.getOrSet("stats.Bedwars", new JsonMeta()).set("Experience", 500);
+
+        System.out.println(testOne.getMap("stats"));
+    }
 }

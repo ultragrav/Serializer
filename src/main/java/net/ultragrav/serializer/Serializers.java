@@ -108,7 +108,7 @@ public class Serializers {
             @Override
             public Map<?, ?> deserialize(GravSerializer serializer, Object... args) {
                 int size = serializer.readInt();
-                Map<Object, Object> map = new ConcurrentHashMap<>();
+                Map<Object, Object> map = new ConcurrentHashMap<>(size);
                 for (int i = 0; i < size; i++) {
                     Map.Entry<?, ?> entry = (Map.Entry<?, ?>) deserializeObject(serializer);
                     if (entry == null || entry.getValue() == null) {
@@ -149,7 +149,7 @@ public class Serializers {
             @Override
             public List<?> deserialize(GravSerializer serializer, Object... args) {
                 int size = serializer.readInt();
-                List<Object> l = new ArrayList<>();
+                List<Object> l = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
                     l.add(deserializeObject(serializer, args));
                 }
@@ -494,6 +494,27 @@ public class Serializers {
             }
         }));
         // 30
+        SERIALIZERS.add(new SerializerElement(Set.class, new Serializer<Set<?>>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                Set<?> set = (Set<?>) t;
+                serializer.writeInt(set.size());
+                for (Object o : set) {
+                    serializeObject(serializer, o);
+                }
+            }
+
+            @Override
+            public Set<?> deserialize(GravSerializer serializer, Object... args) {
+                int len = serializer.readInt();
+                Set<Object> ret = new HashSet<>(len);
+                for (int i = 0; i < len; i++) {
+                    ret.add(deserializeObject(serializer, args));
+                }
+                return ret;
+            }
+        }));
+        // 31
         SERIALIZERS.add(new SerializerElement(JsonMeta.class, new Serializer<JsonMeta>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {

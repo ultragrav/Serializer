@@ -1,11 +1,13 @@
 package net.ultragrav.serializer;
 
+import lombok.val;
 import net.ultragrav.serializer.util.JsonUtil;
 
 import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 //TODO make thread-safe
@@ -163,6 +165,26 @@ public class JsonMeta implements GravSerializable {
 
     public void remove(String path, boolean markDirty) {
         set(path, null, markDirty);
+    }
+
+    public <T> JsonMeta setSerializedList(String path, List<T> list, Function<T, JsonMeta> serializer) {
+        List<JsonMeta> serializedList = new ArrayList<>();
+        for (T t : list) {
+            serializedList.add(serializer.apply(t));
+        }
+        set(path, serializedList);
+        return this;
+    }
+
+    public <T> List<T> getSerializedList(String path, Function<JsonMeta, T> deserializer) {
+        List<JsonMeta> serializedList = get(path);
+        if (serializedList == null)
+            return null;
+        List<T> list = new ArrayList<>();
+        for (JsonMeta m : serializedList) {
+            list.add(deserializer.apply(m));
+        }
+        return list;
     }
 
     public JsonMeta set(String path, Object value) {

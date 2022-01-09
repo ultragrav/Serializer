@@ -167,7 +167,7 @@ public class JsonMeta implements GravSerializable {
         set(path, null, markDirty);
     }
 
-    public <T> JsonMeta setSerializedList(String path, List<T> list, Function<T, JsonMeta> serializer) {
+    public <T> JsonMeta setSerializedList(String path, Iterable<T> list, Function<T, JsonMeta> serializer) {
         List<JsonMeta> serializedList = new ArrayList<>();
         for (T t : list) {
             serializedList.add(serializer.apply(t));

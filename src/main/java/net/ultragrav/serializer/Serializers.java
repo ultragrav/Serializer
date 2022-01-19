@@ -514,6 +514,19 @@ public class Serializers {
                 return ret;
             }
         }));
+        // 31
+        SERIALIZERS.add(new SerializerElement(JsonMeta.class, new Serializer<JsonMeta>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                JsonMeta meta = (JsonMeta) t;
+                meta.serialize(serializer);
+            }
+
+            @Override
+            public JsonMeta deserialize(GravSerializer serializer, Object... args) {
+                return JsonMeta.deserialize(serializer);
+            }
+        }));
     }
 
     public static boolean canSerialize(Class<?> clazz) {

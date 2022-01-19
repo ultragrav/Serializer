@@ -2,10 +2,12 @@ package net.ultragrav.serializer;
 
 import net.ultragrav.serializer.util.JsonUtil;
 
+import javax.xml.ws.Provider;
 import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 //TODO make thread-safe
@@ -150,6 +152,22 @@ public class JsonMeta implements GravSerializable {
             if (obj == null) {
                 set(path, defaultValue, markDirty);
                 return defaultValue;
+            }
+            return obj;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public <T> T getOrCompute(String path, Supplier<T> defaultProvider, Object... constructionArgs) {
+        return getOrCompute(path, defaultProvider, markDirtyByDefault, constructionArgs);
+    }
+    public <T> T getOrCompute(String path, Supplier<T> defaultProvider, boolean markDirty, Object... constructionArgs) {
+        lock.lock();
+        try {
+            T obj = get(path, constructionArgs);
+            if (obj == null) {
+                set(path, (obj = defaultProvider.get()), markDirty);
             }
             return obj;
         } finally {

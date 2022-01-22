@@ -40,7 +40,6 @@ public class JsonMeta implements GravSerializable {
         this.markDirtyByDefault = useRecord;
     }
 
-    @SuppressWarnings("unchecked")
     public JsonMeta(Map<String, Object> map) {
         for (Map.Entry<String, Object> ent : map.entrySet()) {
             set(ent.getKey(), ent.getValue(), false);
@@ -103,6 +102,7 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T get(String[] path, Object... constructionArgs) {
         lock.lock();
         try {
@@ -313,7 +313,7 @@ public class JsonMeta implements GravSerializable {
                 Object current = this.get(new String[]{key});
 
                 if (next instanceof JsonMeta && current instanceof JsonMeta) {
-                    ((JsonMeta) current).putAll((JsonMeta) next);
+                    ((JsonMeta) current).putAll((JsonMeta) next, markDirty);
                 } else {
                     set(new String[]{key}, next, markDirty);
                 }
@@ -436,7 +436,7 @@ public class JsonMeta implements GravSerializable {
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             Object val = entry.getValue();
             String valStr = val == null ? "null" :
-                    val instanceof JsonMeta ? ((JsonMeta) val).recursiveToString(indentation + 1) : val.toString();
+                    val instanceof JsonMeta ? ((JsonMeta) val).recursiveFullToString(indentation + 1) : val.toString();
             builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
         }
         builder.append(indent).append("}");

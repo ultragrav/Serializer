@@ -1,14 +1,11 @@
 package net.ultragrav.serializer;
 
-import lombok.val;
 import net.ultragrav.serializer.util.JsonUtil;
 
-import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 //TODO make thread-safe
@@ -97,7 +94,7 @@ public class JsonMeta implements GravSerializable {
     public <K, V> Map<K, V> getMap(String path) {
         try {
             return this.get(path);
-        } catch(ClassCastException ex) {
+        } catch (ClassCastException ex) {
             return (Map<K, V>) this.<JsonMeta>get(path).asMap();
         }
     }
@@ -128,11 +125,7 @@ public class JsonMeta implements GravSerializable {
                     return (T) o;
                 }
             }
-//            try {
-                return (T) current;
-//            } catch (ClassCastException e) {
-//                return (T) current.asMap();
-//            }
+            return (T) current;
         } finally {
             lock.unlock();
         }
@@ -160,9 +153,32 @@ public class JsonMeta implements GravSerializable {
         }
     }
 
+    /**
+     * Return the value represented by path if it exists, otherwise return defaultValue
+     *
+     * @param path             Path to value
+     * @param defaultValue     Default Value
+     * @param constructionArgs Construction arguments
+     * @param <T>              Type of value
+     * @return Value or default
+     */
+    public <T> T getOrDefault(String path, T defaultValue, Object... constructionArgs) {
+        lock.lock();
+        try {
+            T obj = get(path, constructionArgs);
+            if (obj == null) {
+                return defaultValue;
+            }
+            return obj;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public <T> T getOrCompute(String path, Supplier<T> defaultProvider, Object... constructionArgs) {
         return getOrCompute(path, defaultProvider, markDirtyByDefault, constructionArgs);
     }
+
     public <T> T getOrCompute(String path, Supplier<T> defaultProvider, boolean markDirty, Object... constructionArgs) {
         lock.lock();
         try {
@@ -421,6 +437,7 @@ public class JsonMeta implements GravSerializable {
     public String toString() {
         return recursiveToString(0);
     }
+
     public String toStringFull() {
         return recursiveFullToString(0);
     }
@@ -737,6 +754,7 @@ public class JsonMeta implements GravSerializable {
         });
         return ret;
     }
+
     public Map<String, Object> asFlatMap() {
         Map<String, Object> ret = new HashMap<>();
         this.data.forEach((k, v) -> {

@@ -1,5 +1,7 @@
 package net.ultragrav.serializer;
 
+import net.ultragrav.serializer.annotations.EnumSerialization;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.*;
@@ -161,25 +163,58 @@ public class Serializers {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
                 Enum<?> e = (Enum<?>) t;
+                Class<?> clazz = e.getClass();
+                boolean useName = false;
+
+                if (clazz.isAnnotationPresent(EnumSerialization.class)) {
+                    EnumSerialization ann = clazz.getAnnotation(EnumSerialization.class);
+
+                    useName = ann.useName();
+                }
+
+                serializer.writeBoolean(useName);
                 serializer.writeString(t.getClass().getName());
-                serializer.writeInt(e.ordinal());
+
+                if (useName)
+                    serializer.writeString(e.name());
+                else
+                    serializer.writeInt(e.ordinal());
             }
 
+            @SuppressWarnings({"unchecked", "rawtypes"})
             @Override
             public Enum<?> deserialize(GravSerializer serializer, Object... args) {
+                byte useName = serializer.readByte();
+                if (useName != 0 && useName != 1) {
+                    useName = 1;
+                    serializer.skip(-1);
+                }
+
+                String className = serializer.readString();
+
+                String name = null;
+                int ordinal = -1;
+                if (useName == 1) {
+                    name = serializer.readString();
+                } else {
+                    ordinal = serializer.readInt();
+                }
+
                 try {
-                    String className = serializer.readString();
-                    int ordinal = serializer.readInt();
                     Class<?> clazz = Class.forName(className);
                     if (!clazz.isEnum()) {
                         return null;
                     }
-                    return (Enum<?>) clazz.getEnumConstants()[ordinal];
-                } catch (Exception e) {
-                    System.out.println("Error while deserializing enum:");
-                    e.printStackTrace();
+                    if (useName == 1) {
+                        return (Enum<?>) Enum.valueOf((Class<? extends Enum>) clazz, name);
+                    } else {
+                        return (Enum<?>) clazz.getEnumConstants()[ordinal];
+                    }
+                } catch (ClassNotFoundException e) {
+                    throw new ObjectDeserializationException(
+                            "Class not found for enum: " + className, e,
+                            ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
                 }
-                return null;
             }
         }));
         //11
@@ -466,7 +501,7 @@ public class Serializers {
                 AtomicLongArray arr = (AtomicLongArray) t;
                 int len = arr.length();
                 serializer.writeInt(len);
-                for (int i = 0; i < len; i ++) {
+                for (int i = 0; i < len; i++) {
                     serializer.writeLong(arr.get(i));
                 }
             }
@@ -530,8 +565,7 @@ public class Serializers {
     }
 
     public static boolean canSerialize(Class<?> clazz) {
-        for (int i = 0; i < SERIALIZERS.size(); i++) {
-            SerializerElement s = SERIALIZERS.get(i);
+        for (SerializerElement s : SERIALIZERS) {
             if (s.getClazz().isAssignableFrom(clazz)) {
                 return true;
             }

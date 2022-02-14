@@ -93,7 +93,11 @@ public class GravSerializer implements GravSerializable {
     }
 
     public long skip(long n) {
-        if (reading + n > used) {
+        if (reading + n < 0) {
+            int skipped = reading;
+            reading = 0;
+            return skipped;
+        } else if (reading + n > used) {
             int skipped = used - reading;
             reading = used;
             return skipped;

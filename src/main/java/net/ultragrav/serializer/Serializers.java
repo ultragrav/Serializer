@@ -172,32 +172,24 @@ public class Serializers {
                     useName = ann.useName();
                 }
 
-                serializer.writeBoolean(useName);
                 serializer.writeString(t.getClass().getName());
 
-                if (useName)
+                if (useName) {
+                    serializer.writeInt(-1);
                     serializer.writeString(e.name());
-                else
+                } else
                     serializer.writeInt(e.ordinal());
             }
 
             @SuppressWarnings({"unchecked", "rawtypes"})
             @Override
             public Enum<?> deserialize(GravSerializer serializer, Object... args) {
-                byte useName = serializer.readByte();
-                if (useName != 0 && useName != 1) {
-                    useName = 1;
-                    serializer.skip(-1);
-                }
-
                 String className = serializer.readString();
 
+                int ordinal = serializer.readInt();
                 String name = null;
-                int ordinal = -1;
-                if (useName == 1) {
+                if (ordinal == -1) {
                     name = serializer.readString();
-                } else {
-                    ordinal = serializer.readInt();
                 }
 
                 try {
@@ -205,7 +197,7 @@ public class Serializers {
                     if (!clazz.isEnum()) {
                         return null;
                     }
-                    if (useName == 1) {
+                    if (ordinal == -1) {
                         return (Enum<?>) Enum.valueOf((Class<? extends Enum>) clazz, name);
                     } else {
                         return (Enum<?>) clazz.getEnumConstants()[ordinal];

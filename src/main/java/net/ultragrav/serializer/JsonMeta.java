@@ -8,7 +8,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-//TODO make thread-safe
 public class JsonMeta implements GravSerializable {
     private static final int FORMAT_VERSION = 2;
     private static final String SERIALIZED_PREFIX = "__$$";

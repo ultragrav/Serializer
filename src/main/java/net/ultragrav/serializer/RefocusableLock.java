@@ -6,7 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RefocusableLock implements Lock {
-    private final ReentrantLock current = new ReentrantLock(); // Only use if parent's parent in null.
+    private final ReentrantLock current = new ReentrantLock(); // Only use if parent's parent is null.
     private final JsonMeta parent;
 
     public RefocusableLock(JsonMeta parent) {

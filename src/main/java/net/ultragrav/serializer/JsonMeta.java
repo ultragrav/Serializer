@@ -17,7 +17,7 @@ public class JsonMeta implements GravSerializable {
 
     private String delimiter = "\\.";
     private String[] path = new String[0];
-    private JsonMeta parent = null;
+    private volatile JsonMeta parent = null;
 
     private final RefocusableLock lock = new RefocusableLock(this);
 

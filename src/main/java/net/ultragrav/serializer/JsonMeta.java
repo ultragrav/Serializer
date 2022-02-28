@@ -8,7 +8,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-//TODO make thread-safe
 public class JsonMeta implements GravSerializable {
     private static final int FORMAT_VERSION = 2;
     private static final String SERIALIZED_PREFIX = "__$$";
@@ -18,7 +17,7 @@ public class JsonMeta implements GravSerializable {
 
     private String delimiter = "\\.";
     private String[] path = new String[0];
-    private JsonMeta parent = null;
+    private volatile JsonMeta parent = null;
 
     private final RefocusableLock lock = new RefocusableLock(this);
 

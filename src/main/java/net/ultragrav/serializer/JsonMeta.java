@@ -486,6 +486,31 @@ public class JsonMeta implements GravSerializable {
         return builder.append(indent).append("}").toString();
     }
 
+    public String toStringSerialize() {
+        return recursiveToStringSerialize(0);
+    }
+    private String recursiveToStringSerialize(int indentation) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < indentation; i++) {
+            indent.append("  ");
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("{").append("\n");
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            Object val = entry.getValue();
+            String valStr;
+            if (val == null) valStr = "null";
+            else if (val instanceof JsonMeta) valStr = ((JsonMeta) val).recursiveToStringSerialize(indentation + 1);
+            else if (val instanceof JsonMetaSerializable)
+                valStr = val.getClass() + "* " + ((JsonMetaSerializable) val).serialize().recursiveToStringSerialize(indentation + 1);
+            else valStr = val.toString();
+            builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
+        }
+
+        return builder.append(indent).append("}").toString();
+    }
+
     /**
      * Convert an object to json, maybe works!
      *

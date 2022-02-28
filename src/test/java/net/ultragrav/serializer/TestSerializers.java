@@ -22,7 +22,13 @@ public class TestSerializers {
 
     @Test
     public void testString() {
-        testObject(RandomUtil.randomString(50));
+        String obj = RandomUtil.randomString(50);
+
+        GravSerializer ser = new GravSerializer();
+
+        ser.writeObject(obj);
+
+        Assertions.assertEquals(ser.readObject(), obj);
     }
 
     @Test

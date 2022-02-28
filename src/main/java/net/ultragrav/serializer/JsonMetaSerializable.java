@@ -23,22 +23,28 @@ public interface JsonMetaSerializable extends GravSerializable {
 
         boolean c1 = false;
         try {
-            try {
-                Method m = ReflectionUtil.getCompatibleMethod(clazz, "deserialize", args);
-                if (m == null) throw new NoSuchMethodException();
-                return (T) m.invoke(null, meta);
-            } catch (NoSuchMethodException ignored) {
-            } catch (NullPointerException e) {
-                c1 = true;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Constructor<T> constructor = ReflectionUtil.getCompatibleConstructor(clazz, args);
-            return (T) constructor.newInstance(args);
+            Method m = ReflectionUtil.getCompatibleMethod(clazz, "deserialize", args);
+            if (m == null) throw new NoSuchMethodException();
+            return (T) m.invoke(null, meta);
+        } catch (NoSuchMethodException ignored) {
+        } catch (NullPointerException e) {
+            c1 = true;
         } catch (Exception e) {
-            if (!c1)
-                throw new ObjectDeserializationException("ERROR: Could NOT find a deserialization method for " + className, e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
-            throw new ObjectDeserializationException("ERROR: Deserialization method non-static for " + className, e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
+            throw new ObjectDeserializationException("An unknown error occurred while deserializing " + className, e, ObjectDeserializationException.DeserializationExceptionCause.UNKNOWN);
+        }
+
+        Constructor<T> constructor = ReflectionUtil.getCompatibleConstructor(clazz, args);
+
+        if (constructor == null) {
+            if (c1)
+                throw new ObjectDeserializationException("Deserialization method non-static for " + className, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
+            throw new ObjectDeserializationException("Could not find a deserialization method for " + className, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
+        }
+
+        try {
+            return (T) constructor.newInstance(args);
+        } catch(Exception e) {
+            throw new ObjectDeserializationException("An error occurred while initializing " + className, e, ObjectDeserializationException.DeserializationExceptionCause.INTERNAL);
         }
     }
 

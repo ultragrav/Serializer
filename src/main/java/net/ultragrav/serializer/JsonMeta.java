@@ -667,7 +667,7 @@ public class JsonMeta implements GravSerializable {
 
             serializer.writeInt(FORMAT_VERSION);
 
-            int len = reduced ? record.updatedFields.size() : this.data.size();
+            int len = reduced ? record.updatedFields.size() : (this.data.size() + this.toDeserialize.size());
 
             serializer.writeBoolean(reduced); //Probably not needed but who cares about an extra couple bytes
             serializer.writeInt(len);
@@ -682,6 +682,11 @@ public class JsonMeta implements GravSerializable {
                     String key = entry.getKey();
                     Object val = entry.getValue();
                     serializeObject(serializer, key, val, false);
+                }
+                for (Map.Entry<String, GravSerializer> entry : this.toDeserialize.entrySet()) {
+                    serializer.writeByte((byte) 1);
+                    serializer.writeString(entry.getKey());
+                    serializer.writeByteArray(entry.getValue().toByteArray());
                 }
             }
         } finally {
@@ -737,11 +742,11 @@ public class JsonMeta implements GravSerializable {
         for (int i = 0; i < len; i++) {
             byte type = serializer.readByte();
             String key = serializer.readString();
-            Object object;
+            Object object = null;
             if (type == 0) {
                 object = JsonMeta.deserialize(serializer);
                 link(meta, (JsonMeta) object, key); // Bug fix: parent was not being set on deserialization.
-            } else {
+            } else if (type == 1) {
                 int sl = -1;
                 if (version >= 2)
                     sl = serializer.readInt();

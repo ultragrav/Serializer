@@ -1,5 +1,7 @@
 package net.ultragrav.serializer.util;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -12,7 +14,9 @@ public class RandomUtil {
     }
 
     public static String randomString(int len) {
-        return new String(randomBytes(len));
+        byte[] data = randomBytes(len);
+        // Decode into string.
+        return new String(new String(data).getBytes());
     }
 
     public static String randomStringAlpha(int len) {

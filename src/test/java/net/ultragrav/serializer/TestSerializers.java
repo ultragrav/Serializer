@@ -6,10 +6,9 @@ import net.ultragrav.serializer.util.RandomUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestSerializers {
     private void testObject(Object obj) {
@@ -22,13 +21,36 @@ public class TestSerializers {
 
     @Test
     public void testString() {
-        String obj = RandomUtil.randomString(50);
+        String obj = RandomUtil.randomString(60);
 
         GravSerializer ser = new GravSerializer();
 
         ser.writeObject(obj);
 
-        Assertions.assertEquals(ser.readObject(), obj);
+        String s = ser.readObject();
+
+        Assertions.assertEquals(s, obj);
+    }
+
+    public boolean strEquals(String s1, String s2) {
+        if (s1 == null && s2 == null) {
+            return true;
+        }
+        if (s1 == null || s2 == null) {
+            return false;
+        }
+        // Check equality manually.
+        if (s1.length() != s2.length()) {
+            return false;
+        }
+        for (int i = 0; i < s1.length(); i++) {
+            if (s1.charAt(i) != s2.charAt(i)) {
+                System.out.println("At index " + i + ", '" + s1.charAt(i) + "' != '" + s2.charAt(i) + "'");
+                System.out.println("As numbers, " + (int) s1.charAt(i) + " != " + (int) s2.charAt(i));
+                return false;
+            }
+        }
+        return true;
     }
 
     @Test

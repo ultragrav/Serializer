@@ -99,6 +99,19 @@ public class JsonMeta implements GravSerializable {
     }
 
     @SuppressWarnings("unchecked")
+    public <K, V> Map<K, V> getMapOrDefault(String path, Map<K, V> def) {
+        Map<K, V> map;
+        try {
+            map = this.get(path);
+        } catch (ClassCastException ex) {
+            map = (Map<K, V>) this.<JsonMeta>get(path).asMap();
+        }
+
+        if (map == null) return def;
+        return map;
+    }
+
+    @SuppressWarnings("unchecked")
     public <T> T get(String[] path, Object... constructionArgs) {
         lock.lock();
         try {
@@ -488,6 +501,7 @@ public class JsonMeta implements GravSerializable {
     public String toStringSerialize() {
         return recursiveToStringSerialize(0);
     }
+
     private String recursiveToStringSerialize(int indentation) {
         StringBuilder indent = new StringBuilder();
         for (int i = 0; i < indentation; i++) {

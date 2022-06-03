@@ -2,6 +2,11 @@ package net.ultragrav.serializer;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -113,5 +118,16 @@ public class TestJsonMeta {
         testOne.getOrSet("stats.Bedwars", new JsonMeta()).set("Experience", 500);
 
         System.out.println(testOne.getMap("stats"));
+    }
+
+    @Test
+    public void testMaps() {
+        JsonMeta testMeta = new JsonMeta(false);
+        Map<ElementType, Integer> testMap = new HashMap<>();
+
+        // Empty map test
+        testMeta.set("emptyMap", testMap);
+        Map<ElementType, Integer> emptyMapGet = testMeta.getMap("emptyMap");
+
     }
 }

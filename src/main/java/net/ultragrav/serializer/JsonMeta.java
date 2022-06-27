@@ -736,6 +736,9 @@ public class JsonMeta implements GravSerializable {
     }
 
     public static JsonMeta deserialize(GravSerializer serializer) {
+        return deserialize(serializer, true);
+    }
+    public static JsonMeta deserialize(GravSerializer serializer, boolean doDeserialization) {
         JsonMeta meta = new JsonMeta();
 
         //No need to use lock
@@ -758,24 +761,30 @@ public class JsonMeta implements GravSerializable {
             String key = serializer.readString();
             Object object = null;
             if (type == 0) {
-                object = JsonMeta.deserialize(serializer);
+                object = JsonMeta.deserialize(serializer, doDeserialization);
                 link(meta, (JsonMeta) object, key); // Bug fix: parent was not being set on deserialization.
             } else if (type == 1) {
                 int sl = -1;
                 if (version >= 2)
                     sl = serializer.readInt();
 
-                serializer.mark();
-                try {
-                    object = serializer.readObject();
-                } catch (ObjectDeserializationException ex) {
-                    if (version >= 2) {
-                        serializer.reset();
-                        meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
-                        continue;
-                    } else {
-                        throw new UnsupportedOperationException("Cannot create toDeserialize for data serialized before version 2.");
+                if (doDeserialization) {
+                    int markedPos = serializer.getReadPosition();
+                    try {
+                        object = serializer.readObject();
+                    } catch (ObjectDeserializationException ex) {
+                        if (version >= 2) {
+                            serializer.setReadPosition(markedPos);
+                            meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
+                            continue;
+                        } else {
+                            throw new UnsupportedOperationException("Cannot create toDeserialize for data serialized before version 2.");
+                        }
                     }
+                } else {
+                    serializer.reset();
+                    meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
+                    continue;
                 }
             }
             if (object != null) {

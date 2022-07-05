@@ -2,6 +2,7 @@ package net.ultragrav.serializer;
 
 import net.ultragrav.serializer.annotations.EnumSerialization;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.*;
@@ -246,6 +247,13 @@ public class Serializers {
         SERIALIZERS.add(new SerializerElement(Object[].class, new Serializer<Object[]>() {
             @Override
             public void serialize(GravSerializer serializer, Object t) {
+                // Separate old and new deserialization methods, since length can never be negative
+                serializer.writeInt(-1);
+
+                // Write the class name of the array so it can be used to create the correct type of array later
+                serializer.writeString(t.getClass().getComponentType().getName());
+
+                // Write the elements of the array
                 Object[] arr = (Object[]) t;
                 serializer.writeInt(arr.length);
                 for (Object obj : arr) {
@@ -255,12 +263,41 @@ public class Serializers {
 
             @Override
             public Object[] deserialize(GravSerializer serializer, Object... args) {
+                // Read the (old) length)
                 int len = serializer.readInt();
-                Object[] ret = new Object[len];
-                for (int i = 0; i < len; i++) {
-                    ret[i] = serializer.readObject(args);
+                if (len != -1) {
+                    // Old deserialization
+                    Object[] ret = new Object[len];
+                    for (int i = 0; i < len; i++) {
+                        ret[i] = serializer.readObject(args);
+                    }
+                    return ret;
+                } else {
+                    // Read the class name
+                    String className = serializer.readString();
+
+                    // Get the class
+                    Class<?> clazz;
+                    try {
+                        clazz = Class.forName(className);
+                    } catch (ClassNotFoundException e) {
+                        throw new ObjectDeserializationException("Could not find array class: " + className, e,
+                                ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
+                    }
+
+                    // Read the length in the new position
+                    len = serializer.readInt();
+
+                    // Create an array of the correct type
+                    Object[] ret = (Object[]) Array.newInstance(clazz, len);
+
+                    // Read the array
+                    for (int i = 0; i < len; i++) {
+                        ret[i] = serializer.readObject(args);
+                    }
+
+                    return ret;
                 }
-                return ret;
             }
         }));
         //14
@@ -611,7 +648,7 @@ public class Serializers {
             }
             try {
                 return ser.deserialize(serializer, args);
-            } catch(Exception e) {
+            } catch (Exception e) {
                 throw new ObjectDeserializationException("Failed to deserialize object", e,
                         ObjectDeserializationException.DeserializationExceptionCause.INTERNAL);
             }

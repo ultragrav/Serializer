@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -123,6 +124,17 @@ public class TestSerializers {
                 UUID.randomUUID(), RandomUtil.randomString(20),
                 ThreadLocalRandom.current().nextLong(Long.MAX_VALUE),
                 ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE)));
+    }
+
+    @Test
+    public void testObjectArray() {
+        String[][] test = {{"this", "is", "a", "test"}, {"this", "is", "also", "a", "test"}};
+
+        GravSerializer ser = new GravSerializer();
+        ser.writeObject(test);
+
+        String[][] test2 = ser.readObject();
+        System.out.println(Arrays.deepToString(test2));
     }
 
     // TODO: Test remaining serializers

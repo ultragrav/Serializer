@@ -596,20 +596,29 @@ public class Serializers {
         }
         if (type == 0xFF) {
             Class<?> clazz;
+            String className = serializer.readString();
             try {
-                clazz = Class.forName(serializer.readString());
+                clazz = Class.forName(className);
             } catch (ClassNotFoundException e) {
-                throw new IllegalArgumentException("Cannot deserialize object due to missing Custom Serializer class");
+                throw new ObjectDeserializationException("Cannot deserialize object due to missing Custom Serializer class: " + className,
+                        ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
             }
 
             Serializer<?> ser = CUSTOM_SERIALIZERS.get(clazz);
             if (ser == null) {
-                throw new IllegalArgumentException("Cannot deserialize object due to missing Serializer (Custom Serializer)");
+                throw new ObjectDeserializationException("Cannot deserialize object due to missing Serializer (Custom Serializer): " + className,
+                        ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
             }
-            return ser.deserialize(serializer, args);
+            try {
+                return ser.deserialize(serializer, args);
+            } catch(Exception e) {
+                throw new ObjectDeserializationException("Failed to deserialize object", e,
+                        ObjectDeserializationException.DeserializationExceptionCause.INTERNAL);
+            }
         }
         if (type > SERIALIZERS.size()) {
-            throw new IllegalArgumentException("No serializer found! Invalid object type: " + (type - 1));
+            throw new ObjectDeserializationException("No serializer found! Invalid object type: " + (type - 1),
+                    ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
         }
         return SERIALIZERS.get(type - 1).getSerializer().deserialize(serializer, args);
     }

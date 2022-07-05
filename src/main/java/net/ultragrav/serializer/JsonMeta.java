@@ -336,16 +336,22 @@ public class JsonMeta implements GravSerializable {
         meta.lock.lock();
 
         try {
+            // Go through all data elements
             for (String key : meta.getKeys()) {
                 Object next = meta.get(new String[]{key});
                 Object current = this.get(new String[]{key});
 
+                // If we are writing from JsonMeta to JsonMeta, pass down the call, so we don't
+                // unnecessarily mark fields as dirty
                 if (next instanceof JsonMeta && current instanceof JsonMeta) {
                     ((JsonMeta) current).putAll((JsonMeta) next, markDirty);
                 } else {
                     set(new String[]{key}, next, markDirty);
                 }
             }
+
+            // Since toDeserialize can never contain JsonMetas, we can just dump all the elements
+            this.toDeserialize.putAll(meta.toDeserialize);
         } finally {
             meta.lock.unlock();
             lock.unlock();

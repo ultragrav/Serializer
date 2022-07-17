@@ -46,27 +46,17 @@ public class JsonUtil {
             }
 
             if (ch == 't') { // Can only be true in valid JSON
-                it.next();
-                it.next();
-                it.next();
-                it.next();
+                it.setIndex(it.getIndex() + 4);
 
                 return true;
             }
             if (ch == 'f') { // Can only be false in valid JSON
-                it.next();
-                it.next();
-                it.next();
-                it.next();
-                it.next();
+                it.setIndex(it.getIndex() + 5);
 
                 return false;
             }
             if (ch == 'n') { // Can only be null in valid JSON
-                it.next();
-                it.next();
-                it.next();
-                it.next();
+                it.setIndex(it.getIndex() + 4);
 
                 return null;
             }
@@ -222,14 +212,27 @@ public class JsonUtil {
         }
 
         private char currNWSP() {
-            if (!isWhitespace(it.current())) return it.current();
-            return nextNWSP();
+            if (isWhitespace(it.current()) || it.current() == '/') return nextNWSP();
+            return it.current();
         }
 
         private char nextNWSP() {
-            char ch = it.next();
-            while (isWhitespace(ch)) ch = it.next();
-            return ch;
+            if (it.current() == '/') {
+                char ch = it.next();
+                if (ch == '/') {
+                    while (it.next() != '\n');
+                    it.next();
+                    return currNWSP();
+                } else if (ch == '*') {
+                    while (it.next() != '*' || it.next() != '/');
+                    it.next();
+                    return currNWSP();
+                } else {
+                    throw new IllegalArgumentException("Invalid JSON format at index: " + it.getIndex() + ", current token: " + ch);
+                }
+            }
+            while (isWhitespace(it.next()));
+            return it.current();
         }
     }
 

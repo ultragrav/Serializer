@@ -1,3 +1,5 @@
+[![Build](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fci.ultragrav.net%2Fjob%2FSerializer)](Build)
+
 # Serializer
 A simple but versatile serialization system to convert objects and primitives into byte arrays or files.
 

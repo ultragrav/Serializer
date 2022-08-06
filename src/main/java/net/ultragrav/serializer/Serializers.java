@@ -599,6 +599,11 @@ public class Serializers {
                 return true;
             }
         }
+        for (Class<?> s : CUSTOM_SERIALIZERS.keySet()) {
+            if (s.isAssignableFrom(clazz)) {
+                return true;
+            }
+        }
         return false;
     }
 

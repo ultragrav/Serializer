@@ -8,9 +8,6 @@
     <artifactId>Serializer</artifactId>
     <packaging>jar</packaging>
     <version>1.2.2</version>
-<!--    <modules>-->
-<!--        <module>SerializerSpigot</module>-->
-<!--    </modules>-->
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,13 +26,6 @@
         </plugins>
     </build>
 
-<!--    <repositories>-->
-<!--        <repository>-->
-<!--            <id>ultradev</id>-->
-<!--            <url>https://cdn.excelsiormc.net/mvnrepo</url>-->
-<!--        </repository>-->
-<!--    </repositories>-->
-
     <dependencies>
         <dependency>
             <groupId>com.github.luben</groupId>
@@ -46,14 +36,14 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.22</version>
+            <version>1.18.24</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.8.2</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
 

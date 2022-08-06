@@ -8,6 +8,10 @@ import java.lang.annotation.Target;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestJsonMeta {
@@ -40,57 +44,77 @@ public class TestJsonMeta {
 
     @Test
     public void testConcurrencyBasic() {
-        JsonMeta mother = new JsonMeta();
-        JsonMeta father = new JsonMeta();
-        JsonMeta child = new JsonMeta();
 
-        String key = "key";
+        for (int it = 0; it < 20; it++) {
+            JsonMeta mother = new JsonMeta();
+            JsonMeta father = new JsonMeta();
+            JsonMeta child = new JsonMeta();
 
-        mother.set(key, child);
+            String key = "key";
 
-        AtomicBoolean aliceFinished = new AtomicBoolean();
-        AtomicBoolean bobFinished = new AtomicBoolean();
+            mother.set(key, child);
 
-        Thread alice = new Thread(() -> {
-            // Alice will be switching the child between the two parents.
-            boolean withMother = true;
-            for (int i = 0; i < 100000; i++) {
-                if (withMother) {
-                    // Set to father.
-                    father.set(key, child);
-                    withMother = false;
-                } else {
-                    // Set to mother.
-                    mother.set(key, child);
-                    withMother = true;
+            CompletableFuture<Void> aliceFinished = new CompletableFuture<>();
+            CompletableFuture<Void> bobFinished = new CompletableFuture<>();
+
+            Thread alice = new Thread(() -> {
+                // Alice will be switching the child between the two parents.
+                boolean withMother = true;
+                for (int i = 0; i < 100000; i++) {
+                    if (withMother) {
+                        // Set to father.
+                        father.set(key, child);
+                        withMother = false;
+                    } else {
+                        // Set to mother.
+                        mother.set(key, child);
+                        withMother = true;
+                    }
                 }
+                aliceFinished.complete(null);
+            });
+
+            Thread bob = new Thread(() -> {
+                // Bob will continuously be setting a value in the child.
+                for (int i = 0; i < 100000; i++) {
+                    child.set("value", "value");
+                }
+                bobFinished.complete(null);
+            });
+
+            alice.start();
+            bob.start();
+
+            try {
+                CompletableFuture.allOf(aliceFinished, bobFinished).get(5, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                throw new RuntimeException(e);
             }
-            aliceFinished.set(true);
-        });
 
-        Thread bob = new Thread(() -> {
-            // Bob will continuously be setting a value in the child.
-            for (int i = 0; i < 100000; i++) {
-                child.set("value", "value");
+            if (!aliceFinished.isDone() && bobFinished.isDone()) {
+                throw new RuntimeException("Bob finished, Alice did not!");
+            } else if (aliceFinished.isDone() && !bobFinished.isDone()) {
+                throw new RuntimeException("Alice finished, Bob did not!");
+            } else if (!aliceFinished.isDone() && !bobFinished.isDone()) {
+
+                // Print out the stack trace for both threads.
+                StackTraceElement[] aliceStack = alice.getStackTrace();
+                System.out.println("Alice's stack trace:");
+                for (StackTraceElement element : aliceStack) {
+                    System.out.println(element);
+                }
+
+                StackTraceElement[] bobStack = bob.getStackTrace();
+                System.out.println("Bob's stack trace:");
+                for (StackTraceElement element : bobStack) {
+                    System.out.println(element);
+                }
+
+                throw new RuntimeException("Neither Alice nor Bob finished!");
+
+            } else {
+//                System.out.println("Both threads finished!");
             }
-            bobFinished.set(true);
-        });
-
-        alice.start();
-        bob.start();
-
-        try {
-            Thread.sleep(400);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        if (!aliceFinished.get() && bobFinished.get()) {
-            throw new RuntimeException("Bob finished, Alice did not!");
-        } else if (aliceFinished.get() && !bobFinished.get()) {
-            throw new RuntimeException("Alice finished, Bob did not!");
-        } else if (!aliceFinished.get() && !bobFinished.get()) {
-            throw new RuntimeException("Neither Alice nor Bob finished!");
         }
     }
 

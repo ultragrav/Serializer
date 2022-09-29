@@ -287,7 +287,7 @@ public class JsonMeta implements GravSerializable {
                     } else {
                         prev = current.data.put(s, value);
                     }
-                    if (markDirty) {
+                    if (markDirty && !Objects.equals(prev, value)) {
                         current.markDirty(s);
                     }
 

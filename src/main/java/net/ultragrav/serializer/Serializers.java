@@ -3,6 +3,8 @@ package net.ultragrav.serializer;
 import net.ultragrav.serializer.annotations.EnumSerialization;
 
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.*;
@@ -589,6 +591,34 @@ public class Serializers {
             @Override
             public JsonMeta deserialize(GravSerializer serializer, Object... args) {
                 return JsonMeta.deserialize(serializer);
+            }
+        }));
+        //32
+        SERIALIZERS.add(new SerializerElement(BigInteger.class, new Serializer<BigInteger>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeByteArray(((BigInteger) t).toByteArray());
+            }
+
+            @Override
+            public BigInteger deserialize(GravSerializer serializer, Object... args) {
+                byte[] bytes = serializer.readByteArray();
+                return new BigInteger(bytes);
+            }
+        }));
+        //33
+        SERIALIZERS.add(new SerializerElement(BigDecimal.class, new Serializer<BigDecimal>() {
+            @Override
+            public void serialize(GravSerializer serializer, Object t) {
+                serializer.writeByteArray(((BigDecimal) t).unscaledValue().toByteArray());
+                serializer.writeInt(((BigDecimal) t).scale());
+            }
+
+            @Override
+            public BigDecimal deserialize(GravSerializer serializer, Object... args) {
+                byte[] bytes = serializer.readByteArray();
+                int scale = serializer.readInt();
+                return new BigDecimal(new BigInteger(bytes), scale);
             }
         }));
     }

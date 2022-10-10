@@ -1,5 +1,6 @@
 package net.ultragrav.serializer;
 
+import net.ultragrav.serializer.classes.JsonMetaSerializables;
 import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
@@ -8,6 +9,7 @@ import java.lang.annotation.Target;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -153,5 +155,21 @@ public class TestJsonMeta {
         testMeta.set("emptyMap", testMap);
         Map<ElementType, Integer> emptyMapGet = testMeta.getMap("emptyMap");
 
+    }
+
+    @Test
+    public void testFailedDeserialization() {
+        TestMetaSerializable.TestClassParams object = new TestMetaSerializable.TestClassParams(UUID.randomUUID(), "Test");
+
+        JsonMeta meta = new JsonMeta();
+        meta.set("test", object);
+
+        try {
+            meta.get("test");
+        } catch(ObjectDeserializationException ignored) {}
+
+        JsonMetaSerializables.TestClassParams deserialized = meta.get("test", UUID.randomUUID());
+
+        assert object.getName().equals(deserialized.getName());
     }
 }

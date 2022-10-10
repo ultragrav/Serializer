@@ -159,7 +159,7 @@ public class TestJsonMeta {
 
     @Test
     public void testFailedDeserialization() {
-        TestMetaSerializable.TestClassParams object = new TestMetaSerializable.TestClassParams(UUID.randomUUID(), "Test");
+        JsonMetaSerializables.TestClassParams object = new JsonMetaSerializables.TestClassParams(UUID.randomUUID(), "Test");
 
         JsonMeta meta = new JsonMeta();
         meta.set("test", object);

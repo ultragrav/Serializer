@@ -1,5 +1,6 @@
 package net.ultragrav.serializer;
 
+import lombok.val;
 import net.ultragrav.serializer.util.JsonUtil;
 
 import java.util.*;
@@ -127,10 +128,16 @@ public class JsonMeta implements GravSerializable {
                     if (o == null) {
                         GravSerializer ser = current.toDeserialize.get(s);
                         if (ser != null) {
-                            o = ser.readObject(constructionArgs);
-                            if (o != null) {
-                                current.data.put(s, o);
-                                current.toDeserialize.remove(s);
+                            ser.mark();
+                            try {
+                                o = ser.readObject(constructionArgs);
+                                if (o != null) {
+                                    current.data.put(s, o);
+                                    current.toDeserialize.remove(s);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                ser.reset();
                             }
                         }
                     }

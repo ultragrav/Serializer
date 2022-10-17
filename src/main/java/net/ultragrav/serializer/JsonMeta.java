@@ -1,6 +1,5 @@
 package net.ultragrav.serializer;
 
-import lombok.val;
 import net.ultragrav.serializer.util.JsonUtil;
 
 import java.util.*;
@@ -151,7 +150,27 @@ public class JsonMeta implements GravSerializable {
     }
 
     public boolean has(String path) {
-        return data.containsKey(path) || toDeserialize.containsKey(path);
+        return has(path.split(delimiter));
+    }
+
+    public boolean has(String[] path) {
+        lock.lock();
+        try {
+            JsonMeta current = this;
+            for (int i = 0, pathLength = path.length; i < pathLength - 1; i++) {
+                String s = path[i];
+                Object o = current.data.get(s);
+                if (o instanceof JsonMeta) {
+                    current = (JsonMeta) o;
+                } else {
+                    return false;
+                }
+            }
+            return current.data.containsKey(path[path.length - 1])
+                    || current.toDeserialize.containsKey(path[path.length - 1]);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public <T> T getOrSet(String path, T defaultValue, Object... constructionArgs) {
@@ -661,8 +680,6 @@ public class JsonMeta implements GravSerializable {
     }
 
 
-
-
     public JsonMeta reduce() {
         lock.lock();
         try {
@@ -754,6 +771,7 @@ public class JsonMeta implements GravSerializable {
     public static JsonMeta deserialize(GravSerializer serializer) {
         return deserialize(serializer, true);
     }
+
     public static JsonMeta deserialize(GravSerializer serializer, boolean doDeserialization) {
         JsonMeta meta = new JsonMeta();
 

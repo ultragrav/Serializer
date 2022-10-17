@@ -151,7 +151,7 @@ public class JsonMeta implements GravSerializable {
     }
 
     public boolean has(String path) {
-        return get(path) != null;
+        return data.containsKey(path) || toDeserialize.containsKey(path);
     }
 
     public <T> T getOrSet(String path, T defaultValue, Object... constructionArgs) {

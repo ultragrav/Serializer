@@ -314,7 +314,7 @@ public class JsonMeta implements GravSerializable {
                         prev = current.data.put(s, value);
                     }
                     if (markDirty && !Objects.equals(prev, value)) {
-                        current.markDirty(s);
+                        current.markDirty0(s);
                     }
 
                     //Link it if it's a JsonMeta
@@ -418,11 +418,24 @@ public class JsonMeta implements GravSerializable {
         parent.lock.unlock();
     }
 
-    private void markDirty(String key) {
+    public void markDirty(String path) {
+        markDirty(path.split(delimiter));
+    }
+
+    public void markDirty(String[] path) {
+        String[] pathMinusOne = new String[path.length - 1];
+        System.arraycopy(path, 0, pathMinusOne, 0, path.length - 1);
+        JsonMeta meta = get(pathMinusOne);
+        if (meta == null)
+            throw new IllegalArgumentException();
+        meta.markDirty0(path[path.length - 1]);
+    }
+
+    private void markDirty0(String key) {
         record.markDirty(key);
         if (parent != null) {
             if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
-            parent.markDirty(path[path.length - 1]);
+            parent.markDirty0(path[path.length - 1]);
         }
     }
 
@@ -435,7 +448,7 @@ public class JsonMeta implements GravSerializable {
         }
         if (parent != null) {
             if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
-            parent.markDirty(path[path.length - 1]);
+            parent.markDirty0(path[path.length - 1]);
         }
     }
 
@@ -462,7 +475,7 @@ public class JsonMeta implements GravSerializable {
         }
         if (parent != null && changed) {
             if (path.length == 0) throw new IllegalStateException("This shouldn't happen.");
-            parent.markDirty(path[path.length - 1]);
+            parent.markDirty0(path[path.length - 1]);
         }
     }
 

@@ -428,7 +428,12 @@ public class JsonMeta implements GravSerializable {
         JsonMeta meta = get(pathMinusOne);
         if (meta == null)
             throw new IllegalArgumentException();
-        meta.markDirty0(path[path.length - 1]);
+
+        if (meta.get(path[path.length - 1]) instanceof JsonMeta) {
+            ((JsonMeta) meta.get(path[path.length - 1])).markDirtyRecursive();
+        } else {
+            meta.markDirty0(path[path.length - 1]);
+        }
     }
 
     private void markDirty0(String key) {

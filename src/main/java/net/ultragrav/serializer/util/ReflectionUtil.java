@@ -1,5 +1,6 @@
 package net.ultragrav.serializer.util;
 
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -24,7 +25,13 @@ public class ReflectionUtil {
             if (mp.length != params.length) continue;
 
             for (int i = 0; i < mp.length; i++) {
-                if (!mp[i].isInstance(params[i])) continue Label1;
+                if (mp[i].isPrimitive()) {
+                    Class<?> unboxed = mp[i];
+                    Class<?> boxed = MethodType.methodType(unboxed).wrap().returnType();
+                    if (!boxed.isInstance(params[i]) && !unboxed.isInstance(params[i])) continue Label1;
+                } else {
+                    if (!mp[i].isInstance(params[i])) continue Label1;
+                }
             }
 
             return method;
@@ -49,15 +56,17 @@ public class ReflectionUtil {
             if (mp.length != params.length) continue;
 
             for (int i = 0; i < mp.length; i++) {
-                if (!mp[i].isInstance(params[i])) continue Label1;
+                if (mp[i].isPrimitive()) {
+                    Class<?> unboxed = mp[i];
+                    Class<?> boxed = MethodType.methodType(unboxed).wrap().returnType();
+                    if (!boxed.isInstance(params[i]) && !unboxed.isInstance(params[i])) continue Label1;
+                } else {
+                    if (!mp[i].isInstance(params[i])) continue Label1;
+                }
             }
 
             return (Constructor<T>) constructor;
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-
     }
 }

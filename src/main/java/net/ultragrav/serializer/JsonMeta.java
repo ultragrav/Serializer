@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 public class JsonMeta implements GravSerializable {
     private static final int FORMAT_VERSION = 2;
+    private static final String CLASS_FIELD = "__class";
     private static final String SERIALIZED_PREFIX = "__$$";
 
     private final Map<String, Object> data = new HashMap<>();
@@ -602,7 +603,12 @@ public class JsonMeta implements GravSerializable {
                 ret.set(ent.getKey(), ent.getValue());
             else if (ent.getValue() instanceof JsonMeta)
                 ret.set(ent.getKey(), ((JsonMeta) ent.getValue()).toValidJson());
-            else {
+            else if (ent.getValue() instanceof JsonMetaSerializable) {
+                JsonMetaSerializable ser = (JsonMetaSerializable) ent.getValue();
+                JsonMeta meta = ser.serialize();
+                meta.set(CLASS_FIELD, ent.getValue().getClass().getName());
+                ret.set(ent.getKey(), meta.toValidJson());
+            } else {
                 GravSerializer ser = new GravSerializer();
                 ser.writeObject(ent.getValue());
                 ret.set(SERIALIZED_PREFIX + ent.getKey(), ser.toString());
@@ -619,6 +625,23 @@ public class JsonMeta implements GravSerializable {
     public JsonMeta fromValidJson() {
         JsonMeta ret = new JsonMeta(markDirtyByDefault);
         for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+            if (ent.getValue() instanceof JsonMeta) {
+                JsonMeta meta = (JsonMeta) ent.getValue();
+                if (meta.has(CLASS_FIELD)) {
+                    String className = meta.get(CLASS_FIELD);
+                    try {
+                        Class<? extends JsonMetaSerializable> clazz = Class.forName(className)
+                                .asSubclass(JsonMetaSerializable.class);
+                        Object obj = JsonMetaSerializable.deserializeObject(clazz, meta);
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    ret.set(ent.getKey(), meta.fromValidJson());
+                }
+                continue;
+            }
+
             if (!ent.getKey().startsWith(SERIALIZED_PREFIX)) {
                 ret.set(ent.getKey(), ent.getValue());
                 continue;
@@ -629,7 +652,7 @@ public class JsonMeta implements GravSerializable {
             }
 
             String realKey = ent.getKey().substring(SERIALIZED_PREFIX.length());
-            String obj = ((String) ent.getValue());
+            String obj = (String) ent.getValue();
             GravSerializer ser = new GravSerializer(obj);
             Object value = ser.readObject();
             ret.set(realKey, value);

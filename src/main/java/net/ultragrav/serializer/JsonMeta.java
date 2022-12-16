@@ -95,7 +95,7 @@ public class JsonMeta implements GravSerializable {
         try {
             return this.get(path);
         } catch (ClassCastException ex) {
-            return (Map<K, V>) this.<JsonMeta>get(path).asMap();
+            return (Map<K, V>) this.<JsonMeta>get(path).asShallowMap();
         }
     }
 
@@ -105,7 +105,7 @@ public class JsonMeta implements GravSerializable {
         try {
             map = this.get(path);
         } catch (ClassCastException ex) {
-            map = (Map<K, V>) this.<JsonMeta>get(path).asMap();
+            map = (Map<K, V>) this.<JsonMeta>get(path).asShallowMap();
         }
 
         if (map == null) return def;
@@ -868,6 +868,10 @@ public class JsonMeta implements GravSerializable {
         }
 
         return meta;
+    }
+
+    public Map<String, Object> asShallowMap() {
+        return new HashMap<>(this.data);
     }
 
     public Map<String, Object> asMap() {

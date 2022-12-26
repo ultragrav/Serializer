@@ -365,7 +365,13 @@ public class JsonMeta implements GravSerializable {
         try {
             // Go through all data elements
             for (String key : meta.getKeys()) {
-                Object next = meta.get(new String[]{key});
+
+                Object next;
+                try {
+                    next = meta.get(new String[]{key});
+                } catch (Exception e) {
+                    next = null;
+                }
                 Object current;
                 try {
                     current = get(new String[]{key});
@@ -735,11 +741,11 @@ public class JsonMeta implements GravSerializable {
             for (String updatedField : record.getUpdatedFields()) {
                 Object val = get(updatedField);
 
-                //Check if it's a JsonMeta with it's parent as us
+                //Check if it's a JsonMeta with its parent as us
                 if (val instanceof JsonMeta && ((JsonMeta) val).parent == this) {
                     meta.data.put(updatedField, ((JsonMeta) val).reduce());
                 } else {
-                    meta.data.put(updatedField, val);
+                    meta.data.put(updatedField, val); // MUST use meta.data.put otherwise null values will just be ignored
                 }
             }
             return meta;

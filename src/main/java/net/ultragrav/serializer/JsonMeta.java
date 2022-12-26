@@ -365,7 +365,12 @@ public class JsonMeta implements GravSerializable {
             // Go through all data elements
             for (String key : meta.getKeys()) {
                 Object next = meta.get(new String[]{key});
-                Object current = this.get(new String[]{key});
+                Object current;
+                try {
+                    current = get(new String[]{key});
+                } catch (Exception e) {
+                    current = null;
+                }
 
                 // If we are writing from JsonMeta to JsonMeta, pass down the call, so we don't
                 // unnecessarily mark fields as dirty

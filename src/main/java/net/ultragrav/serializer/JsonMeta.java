@@ -310,7 +310,13 @@ public class JsonMeta implements GravSerializable {
                     }
 
                     if (value == null) {
+
+                        // Remove the key
                         prev = current.data.remove(s);
+
+                        // Get rid of toDeserialize
+                        current.toDeserialize.remove(s);
+
                     } else {
                         prev = current.data.put(s, value);
                     }

@@ -873,9 +873,7 @@ public class JsonMeta implements GravSerializable {
                     continue;
                 }
             }
-            if (object != null) {
-                meta.data.put(key, object);
-            }
+            meta.data.put(key, object);
         }
 
         return meta;

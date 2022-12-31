@@ -338,6 +338,7 @@ public class JsonMeta implements GravSerializable {
                             }
                         }
                     }
+
                 } else if (!(o instanceof JsonMeta)) {
                     //Create new json meta at specific path
                     JsonMeta next = new JsonMeta(delimiter);
@@ -739,7 +740,10 @@ public class JsonMeta implements GravSerializable {
 
                 //Check if it's a JsonMeta with its parent as us
                 if (val instanceof JsonMeta && ((JsonMeta) val).parent == this) {
-                    meta.data.put(updatedField, ((JsonMeta) val).reduce());
+                    JsonMeta reduced = ((JsonMeta) val).reduce();
+                    // link
+                    link(meta, reduced, updatedField);
+                    meta.data.put(updatedField, reduced);
                 } else {
                     meta.data.put(updatedField, val); // MUST use meta.data.put otherwise null values will just be ignored
                 }

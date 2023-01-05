@@ -201,9 +201,17 @@ public class Serializers {
                         return null;
                     }
                     if (ordinal == -1) {
-                        return (Enum<?>) Enum.valueOf((Class<? extends Enum>) clazz, name);
+                        try {
+                            return (Enum<?>) Enum.valueOf((Class<? extends Enum>) clazz, name);
+                        } catch (IllegalArgumentException e) {
+                            throw new ObjectDeserializationException("Enum value " + name + " does not exist in " + clazz.getName(), ObjectDeserializationException.DeserializationExceptionCause.UNKNOWN);
+                        }
                     } else {
-                        return (Enum<?>) clazz.getEnumConstants()[ordinal];
+                        try {
+                            return (Enum<?>) clazz.getEnumConstants()[ordinal];
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            throw new ObjectDeserializationException("Enum ordinal " + ordinal + " does not exist in " + clazz.getName(), ObjectDeserializationException.DeserializationExceptionCause.UNKNOWN);
+                        }
                     }
                 } catch (ClassNotFoundException e) {
                     throw new ObjectDeserializationException(

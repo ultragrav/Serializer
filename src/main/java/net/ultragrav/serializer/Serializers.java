@@ -167,11 +167,10 @@ public class Serializers {
             public void serialize(GravSerializer serializer, Object t) {
                 Enum<?> e = (Enum<?>) t;
                 Class<?> clazz = e.getClass();
-                boolean useName = false;
+                boolean useName = true;
 
                 if (clazz.isAnnotationPresent(EnumSerialization.class)) {
                     EnumSerialization ann = clazz.getAnnotation(EnumSerialization.class);
-
                     useName = ann.useName();
                 }
 

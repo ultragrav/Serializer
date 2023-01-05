@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface EnumSerialization {
-    boolean useName() default false;
+    boolean useName() default true;
 }

@@ -165,6 +165,7 @@ public class JsonUtil {
                     escaped = false;
                 } else if (ch == '\\') {
                     escaped = true;
+                    continue;
                 } else if (ch == '"') break;
                 builder.append(ch);
             }

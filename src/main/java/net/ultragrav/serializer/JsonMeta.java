@@ -623,6 +623,8 @@ public class JsonMeta implements GravSerializable {
                 JsonMeta meta = ser.serialize();
                 meta.set(CLASS_FIELD, ent.getValue().getClass().getName());
                 ret.set(ent.getKey(), meta.toValidJson());
+            } else if (ent.getValue() instanceof Boolean) {
+                ret.set(ent.getKey(), ent.getValue());
             } else {
                 GravSerializer ser = new GravSerializer();
                 ser.writeObject(ent.getValue());

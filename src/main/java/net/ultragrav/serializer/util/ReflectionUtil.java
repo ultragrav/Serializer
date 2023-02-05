@@ -32,7 +32,7 @@ public class ReflectionUtil {
                     Class<?> unboxed = mp[i];
                     Class<?> boxed = MethodType.methodType(unboxed).wrap().returnType();
                     if (!boxed.isInstance(params[i]) && !unboxed.isInstance(params[i])) continue Label1;
-                } else {
+                } else if (params[i] != null){
                     if (!mp[i].isInstance(params[i])) continue Label1;
                 }
             }
@@ -63,7 +63,7 @@ public class ReflectionUtil {
                     Class<?> unboxed = mp[i];
                     Class<?> boxed = MethodType.methodType(unboxed).wrap().returnType();
                     if (!boxed.isInstance(params[i]) && !unboxed.isInstance(params[i])) continue Label1;
-                } else {
+                } else if (params[i] != null) {
                     if (!mp[i].isInstance(params[i])) continue Label1;
                 }
             }

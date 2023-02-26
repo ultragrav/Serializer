@@ -331,11 +331,23 @@ public class JsonMeta implements GravSerializable {
                         link(current, v, s);
 
                         if (markDirty) {
-                            v.getRecord().clear();
                             if (prev instanceof JsonMeta) {
+
+                                // Preserve the updated status of updated fields on the previous JsonMeta
+                                List<String> currentlyDirty = ((JsonMeta) prev).getRecord().getUpdatedFields();
+
+                                v.getRecord().clear();
                                 v.markDirtyDiff((JsonMeta) prev);
+
+                                currentlyDirty.forEach(v::markDirty);
+
                             } else {
+
+                                // Don't think this is necessary but I don't want to remove it
+                                v.getRecord().clear();
+
                                 v.markDirtyRecursive();
+
                             }
                         }
                     }

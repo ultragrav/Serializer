@@ -314,7 +314,6 @@ public class JsonMeta implements GravSerializable {
                         // Remove the key
                         prev = current.data.remove(s);
 
-
                     } else {
                         prev = current.data.put(s, value);
                     }
@@ -322,7 +321,7 @@ public class JsonMeta implements GravSerializable {
                     // Get rid of toDeserialize
                     current.toDeserialize.remove(s);
 
-                    if (markDirty && !Objects.equals(prev, value)) {
+                    if (markDirty) {
                         current.markDirty0(s);
                     }
 

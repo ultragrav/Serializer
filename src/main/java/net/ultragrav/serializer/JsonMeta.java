@@ -136,8 +136,8 @@ public class JsonMeta implements GravSerializable {
                                     current.toDeserialize.remove(s);
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace();
                                 ser.reset();
+                                throw new RuntimeException("Failed to deserialize object: " + String.join(".", path), e);
                             }
                         }
                     }

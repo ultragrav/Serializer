@@ -314,7 +314,6 @@ public class JsonMeta implements GravSerializable {
                         // Remove the key
                         prev = current.data.remove(s);
 
-
                     } else {
                         prev = current.data.put(s, value);
                     }
@@ -322,7 +321,7 @@ public class JsonMeta implements GravSerializable {
                     // Get rid of toDeserialize
                     current.toDeserialize.remove(s);
 
-                    if (markDirty && !Objects.equals(prev, value)) {
+                    if (markDirty) {
                         current.markDirty0(s);
                     }
 
@@ -332,11 +331,23 @@ public class JsonMeta implements GravSerializable {
                         link(current, v, s);
 
                         if (markDirty) {
-                            v.getRecord().clear();
                             if (prev instanceof JsonMeta) {
+
+                                // Preserve the updated status of updated fields on the previous JsonMeta
+                                List<String> currentlyDirty = ((JsonMeta) prev).getRecord().getUpdatedFields();
+
+                                v.getRecord().clear();
                                 v.markDirtyDiff((JsonMeta) prev);
+
+                                currentlyDirty.forEach(v::markDirty);
+
                             } else {
+
+                                // Don't think this is necessary but I don't want to remove it
+                                v.getRecord().clear();
+
                                 v.markDirtyRecursive();
+
                             }
                         }
                     }

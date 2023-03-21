@@ -38,7 +38,7 @@ public interface GravSerializable {
         Class<?> clazz;
         try {
             clazz = Class.forName(className);
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | NoClassDefFoundError e) {
             throw new ObjectDeserializationException("Could not find class " + className, e, ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
         }
 

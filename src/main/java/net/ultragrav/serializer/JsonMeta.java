@@ -131,9 +131,9 @@ public class JsonMeta implements GravSerializable {
                             ser.mark();
                             try {
                                 o = ser.readObject(constructionArgs);
+                                current.toDeserialize.remove(s);
                                 if (o != null) {
                                     current.data.put(s, o);
-                                    current.toDeserialize.remove(s);
                                 }
                             } catch (Exception e) {
                                 ser.reset();
@@ -617,32 +617,43 @@ public class JsonMeta implements GravSerializable {
      * @return JSON-supported JsonMeta
      */
     public JsonMeta toValidJson() {
-        JsonMeta ret = new JsonMeta(markDirtyByDefault);
-        for (Map.Entry<String, Object> ent : this.data.entrySet()) {
-            if (ent.getValue() == null)
-                continue;
-            if (ent.getValue() instanceof String)
-                ret.set(ent.getKey(), ent.getValue());
-            else if (ent.getValue() instanceof Number)
-                ret.set(ent.getKey(), ent.getValue());
-            else if (ent.getValue() instanceof List)
-                ret.set(ent.getKey(), ent.getValue());
-            else if (ent.getValue() instanceof JsonMeta)
-                ret.set(ent.getKey(), ((JsonMeta) ent.getValue()).toValidJson());
-            else if (ent.getValue() instanceof JsonMetaSerializable) {
-                JsonMetaSerializable ser = (JsonMetaSerializable) ent.getValue();
-                JsonMeta meta = ser.serialize();
-                meta.set(CLASS_FIELD, ent.getValue().getClass().getName());
-                ret.set(ent.getKey(), meta.toValidJson());
-            } else if (ent.getValue() instanceof Boolean) {
-                ret.set(ent.getKey(), ent.getValue());
-            } else {
-                GravSerializer ser = new GravSerializer();
-                ser.writeObject(ent.getValue());
-                ret.set(SERIALIZED_PREFIX + ent.getKey(), ser.toString());
+        lock.lock();
+        try {
+            JsonMeta ret = new JsonMeta(markDirtyByDefault);
+            for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+                if (ent.getValue() == null)
+                    continue;
+                if (ent.getValue() instanceof String)
+                    ret.set(ent.getKey(), ent.getValue());
+                else if (ent.getValue() instanceof Number)
+                    ret.set(ent.getKey(), ent.getValue());
+                else if (ent.getValue() instanceof List)
+                    ret.set(ent.getKey(), ent.getValue());
+                else if (ent.getValue() instanceof JsonMeta)
+                    ret.set(ent.getKey(), ((JsonMeta) ent.getValue()).toValidJson());
+                else if (ent.getValue() instanceof JsonMetaSerializable) {
+                    JsonMetaSerializable ser = (JsonMetaSerializable) ent.getValue();
+                    JsonMeta meta = ser.serialize();
+                    meta.set(CLASS_FIELD, ent.getValue().getClass().getName());
+                    ret.set(ent.getKey(), meta.toValidJson());
+                } else if (ent.getValue() instanceof Boolean) {
+                    ret.set(ent.getKey(), ent.getValue());
+                } else {
+                    GravSerializer ser = new GravSerializer();
+                    ser.writeObject(ent.getValue());
+                    ret.set(SERIALIZED_PREFIX + ent.getKey(), ser.toString());
+                }
             }
+
+            // toDeserialize
+            for (Map.Entry<String, GravSerializer> toD : toDeserialize.entrySet()) {
+                ret.set(SERIALIZED_PREFIX + toD.getKey(), toD.getValue().toString());
+            }
+
+            return ret;
+        } finally {
+            lock.unlock();
         }
-        return ret;
     }
 
     /**
@@ -651,41 +662,58 @@ public class JsonMeta implements GravSerializable {
      * @return Parsed JsonMeta
      */
     public JsonMeta fromValidJson() {
-        JsonMeta ret = new JsonMeta(markDirtyByDefault);
-        for (Map.Entry<String, Object> ent : this.data.entrySet()) {
-            if (ent.getValue() instanceof JsonMeta) {
-                JsonMeta meta = (JsonMeta) ent.getValue();
-                if (meta.has(CLASS_FIELD)) {
-                    String className = meta.get(CLASS_FIELD);
-                    try {
-                        Class<? extends JsonMetaSerializable> clazz = Class.forName(className)
-                                .asSubclass(JsonMetaSerializable.class);
-                        Object obj = JsonMetaSerializable.deserializeObject(clazz, meta);
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
+        lock.lock();
+        try {
+            JsonMeta ret = new JsonMeta(markDirtyByDefault);
+            for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+                if (ent.getValue() instanceof JsonMeta) {
+                    JsonMeta meta = (JsonMeta) ent.getValue();
+                    if (meta.has(CLASS_FIELD)) {
+                        String className = meta.get(CLASS_FIELD);
+                        try {
+                            Class<? extends JsonMetaSerializable> clazz = Class.forName(className)
+                                    .asSubclass(JsonMetaSerializable.class);
+                            Object obj = JsonMetaSerializable.deserializeObject(clazz, meta);
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        ret.set(ent.getKey(), meta.fromValidJson());
                     }
-                } else {
-                    ret.set(ent.getKey(), meta.fromValidJson());
+                    continue;
                 }
-                continue;
-            }
 
-            if (!ent.getKey().startsWith(SERIALIZED_PREFIX)) {
-                ret.set(ent.getKey(), ent.getValue());
-                continue;
-            }
+                if (!ent.getKey().startsWith(SERIALIZED_PREFIX)) {
+                    ret.set(ent.getKey(), ent.getValue());
+                    continue;
+                }
 
-            if (!(ent.getValue() instanceof String)) {
-                throw new IllegalStateException("Found non-string serialization-key");
-            }
+                if (!(ent.getValue() instanceof String)) {
+                    throw new IllegalStateException("Found non-string serialization-key");
+                }
 
-            String realKey = ent.getKey().substring(SERIALIZED_PREFIX.length());
-            String obj = (String) ent.getValue();
-            GravSerializer ser = new GravSerializer(obj);
-            Object value = ser.readObject();
-            ret.set(realKey, value);
+                String realKey = ent.getKey().substring(SERIALIZED_PREFIX.length());
+                String obj = (String) ent.getValue();
+
+                GravSerializer ser = new GravSerializer(obj);
+                ser.mark();
+
+                try {
+                    Object value = ser.readObject();
+                    if (value != null) {
+                        ret.set(realKey, value);
+                    }
+                } catch (ObjectDeserializationException e) {
+                    // Add to toDeserialize
+                    ser.reset();
+                    ret.toDeserialize.put(realKey, ser);
+                }
+
+            }
+            return ret;
+        } finally {
+            lock.unlock();
         }
-        return ret;
     }
 
     public String toYaml() {
@@ -899,28 +927,38 @@ public class JsonMeta implements GravSerializable {
     }
 
     public Map<String, Object> asMap() {
-        Map<String, Object> ret = new HashMap<>();
-        this.data.forEach((k, v) -> {
-            if (v instanceof JsonMeta) {
-                ret.put(k, ((JsonMeta) v).asMap());
-            } else {
-                ret.put(k, v);
-            }
-        });
-        return ret;
+        lock.lock();
+        try {
+            Map<String, Object> ret = new HashMap<>();
+            this.data.forEach((k, v) -> {
+                if (v instanceof JsonMeta) {
+                    ret.put(k, ((JsonMeta) v).asMap());
+                } else {
+                    ret.put(k, v);
+                }
+            });
+            return ret;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Map<String, Object> asFlatMap() {
-        Map<String, Object> ret = new HashMap<>();
-        this.data.forEach((k, v) -> {
-            if (v instanceof JsonMeta) {
-                Map<String, Object> fm = ((JsonMeta) v).asFlatMap();
-                fm.forEach((k2, v2) -> ret.put(k + '.' + k2, v2));
-            } else {
-                ret.put(k, v);
-            }
-        });
-        return ret;
+        lock.lock();
+        try {
+            Map<String, Object> ret = new HashMap<>();
+            this.data.forEach((k, v) -> {
+                if (v instanceof JsonMeta) {
+                    Map<String, Object> fm = ((JsonMeta) v).asFlatMap();
+                    fm.forEach((k2, v2) -> ret.put(k + '.' + k2, v2));
+                } else {
+                    ret.put(k, v);
+                }
+            });
+            return ret;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Meta toMeta() {
@@ -933,5 +971,101 @@ public class JsonMeta implements GravSerializable {
 
     public JsonMeta copy() {
         return new JsonMeta(asMap());
+    }
+
+    public JsonMeta toBson() {
+        lock.lock();
+        try {
+            JsonMeta ret = new JsonMeta(markDirtyByDefault);
+            for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+                if (ent.getValue() == null)
+                    continue;
+                if (ent.getValue() instanceof String)
+                    ret.set(ent.getKey(), ent.getValue());
+                else if (ent.getValue() instanceof Number)
+                    ret.set(ent.getKey(), ent.getValue());
+                else if (ent.getValue() instanceof List)
+                    ret.set(ent.getKey(), ent.getValue());
+                else if (ent.getValue() instanceof JsonMeta)
+                    ret.set(ent.getKey(), ((JsonMeta) ent.getValue()).toBson());
+                else if (ent.getValue() instanceof JsonMetaSerializable) {
+                    JsonMetaSerializable ser = (JsonMetaSerializable) ent.getValue();
+                    JsonMeta meta = ser.serialize();
+                    meta.set(CLASS_FIELD, ent.getValue().getClass().getName());
+                    ret.set(ent.getKey(), meta.toValidJson());
+                } else if (ent.getValue() instanceof Boolean) {
+                    ret.set(ent.getKey(), ent.getValue());
+                } else {
+                    GravSerializer ser = new GravSerializer();
+                    ser.writeObject(ent.getValue());
+                    ret.set(SERIALIZED_PREFIX + ent.getKey(), ser.toByteArray());
+                }
+            }
+
+            // toDeserialize
+            for (Map.Entry<String, GravSerializer> toD : toDeserialize.entrySet()) {
+                ret.set(SERIALIZED_PREFIX + toD.getKey(), toD.getValue().toByteArray());
+            }
+            return ret;
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+    public JsonMeta fromBson() {
+
+        lock.lock();
+        try {
+            JsonMeta ret = new JsonMeta(markDirtyByDefault);
+            for (Map.Entry<String, Object> ent : this.data.entrySet()) {
+                if (ent.getValue() instanceof JsonMeta) {
+                    JsonMeta meta = (JsonMeta) ent.getValue();
+                    if (meta.has(CLASS_FIELD)) {
+                        String className = meta.get(CLASS_FIELD);
+                        try {
+                            Class<? extends JsonMetaSerializable> clazz = Class.forName(className)
+                                    .asSubclass(JsonMetaSerializable.class);
+                            Object obj = JsonMetaSerializable.deserializeObject(clazz, meta);
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        ret.set(ent.getKey(), meta.fromBson());
+                    }
+                    continue;
+                }
+
+                if (!ent.getKey().startsWith(SERIALIZED_PREFIX)) {
+                    ret.set(ent.getKey(), ent.getValue());
+                    continue;
+                }
+
+                if (!(ent.getValue() instanceof byte[])) {
+                    throw new IllegalStateException("Found non-byte-array serialization-key");
+                }
+
+                String realKey = ent.getKey().substring(SERIALIZED_PREFIX.length());
+                byte[] obj = (byte[]) ent.getValue();
+
+                GravSerializer ser = new GravSerializer(obj);
+                ser.mark();
+
+                try {
+                    Object value = ser.readObject();
+                    if (value != null) {
+                        ret.set(realKey, value);
+                    }
+                } catch (ObjectDeserializationException e) {
+                    // Add to toDeserialize
+                    ser.reset();
+                    ret.toDeserialize.put(realKey, ser);
+                }
+
+            }
+            return ret;
+        } finally {
+            lock.unlock();
+        }
     }
 }

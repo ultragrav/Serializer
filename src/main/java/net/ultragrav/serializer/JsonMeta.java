@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public class JsonMeta implements GravSerializable {
     private static final int FORMAT_VERSION = 2;
     private static final String CLASS_FIELD = "__class";
-    private static final String SERIALIZED_PREFIX = "__$$";
+    private static final String SERIALIZED_PREFIX = "__##";
 
     private final Map<String, Object> data = new HashMap<>();
     public final Map<String, GravSerializer> toDeserialize = new HashMap<>();

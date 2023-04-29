@@ -287,24 +287,24 @@ public class JsonMeta implements GravSerializable {
                     // Setting the value on current now.
                     Object prev;
 
-                    if (value instanceof Map) {
-                        Map<?, ?> vMap = (Map<?, ?>) value;
-                        if (vMap.size() == 0) {
-                            value = new JsonMeta();
-                        } else {
-                            JsonMeta submeta = new JsonMeta();
-                            for (Map.Entry<?, ?> ent : vMap.entrySet()) {
-                                if (ent.getKey() instanceof String) {
-                                    submeta.set((String) ent.getKey(), ent.getValue());
-                                } else {
-                                    submeta = null;
-                                    break;
-                                }
-                            }
-                            if (submeta != null)
-                                value = submeta;
-                        }
-                    }
+//                    if (value instanceof Map) {
+//                        Map<?, ?> vMap = (Map<?, ?>) value;
+//                        if (vMap.size() == 0) {
+//                            value = new JsonMeta();
+//                        } else {
+//                            JsonMeta submeta = new JsonMeta();
+//                            for (Map.Entry<?, ?> ent : vMap.entrySet()) {
+//                                if (ent.getKey() instanceof String) {
+//                                    submeta.set((String) ent.getKey(), ent.getValue());
+//                                } else {
+//                                    submeta = null;
+//                                    break;
+//                                }
+//                            }
+//                            if (submeta != null)
+//                                value = submeta;
+//                        }
+//                    }
                     if (value instanceof Meta) {
                         value = ((Meta) value).toJsonMeta();
                     }

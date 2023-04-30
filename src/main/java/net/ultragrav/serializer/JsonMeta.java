@@ -37,6 +37,7 @@ public class JsonMeta implements GravSerializable {
         this.markDirtyByDefault = useRecord;
     }
 
+    @Deprecated
     public JsonMeta(Map<String, Object> map) {
         for (Map.Entry<String, Object> ent : map.entrySet()) {
             set(ent.getKey(), ent.getValue(), false);
@@ -970,7 +971,21 @@ public class JsonMeta implements GravSerializable {
     }
 
     public JsonMeta copy() {
-        return new JsonMeta(asMap());
+        JsonMeta ret = new JsonMeta();
+        lock.lock();
+        try {
+            for (String key : getKeys()) {
+                Object val = get(key);
+                if (val instanceof JsonMeta) {
+                    ret.set(key, ((JsonMeta) val).copy());
+                } else {
+                    ret.set(key, val);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+        return ret;
     }
 
     public JsonMeta toBson() {

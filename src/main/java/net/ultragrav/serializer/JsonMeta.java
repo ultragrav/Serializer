@@ -675,6 +675,7 @@ public class JsonMeta implements GravSerializable {
                             Class<? extends JsonMetaSerializable> clazz = Class.forName(className)
                                     .asSubclass(JsonMetaSerializable.class);
                             Object obj = JsonMetaSerializable.deserializeObject(clazz, meta);
+                            ret.set(ent.getKey(), obj);
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
                         }
@@ -1007,7 +1008,7 @@ public class JsonMeta implements GravSerializable {
                     JsonMetaSerializable ser = (JsonMetaSerializable) ent.getValue();
                     JsonMeta meta = ser.serialize();
                     meta.set(CLASS_FIELD, ent.getValue().getClass().getName());
-                    ret.set(ent.getKey(), meta.toValidJson());
+                    ret.set(ent.getKey(), meta.toBson());
                 } else if (ent.getValue() instanceof Boolean) {
                     ret.set(ent.getKey(), ent.getValue());
                 } else {
@@ -1042,6 +1043,7 @@ public class JsonMeta implements GravSerializable {
                             Class<? extends JsonMetaSerializable> clazz = Class.forName(className)
                                     .asSubclass(JsonMetaSerializable.class);
                             Object obj = JsonMetaSerializable.deserializeObject(clazz, meta);
+                            ret.set(ent.getKey(), obj);
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
                         }
@@ -1057,7 +1059,7 @@ public class JsonMeta implements GravSerializable {
                 }
 
                 if (!(ent.getValue() instanceof byte[])) {
-                    throw new IllegalStateException("Found non-byte-array serialization-key");
+                    throw new IllegalStateException("Found non-byte-array serialization value");
                 }
 
                 String realKey = ent.getKey().substring(SERIALIZED_PREFIX.length());

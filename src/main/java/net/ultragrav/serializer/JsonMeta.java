@@ -987,6 +987,7 @@ public class JsonMeta implements GravSerializable {
             // Copy over the toDeserialize map.
             this.toDeserialize.forEach((k, v) ->
                     ret.toDeserialize.put(k, new GravSerializer(v.toByteArray())));
+
         } finally {
             lock.unlock();
         }

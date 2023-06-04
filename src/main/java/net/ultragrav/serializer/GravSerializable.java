@@ -42,8 +42,12 @@ public interface GravSerializable {
             throw new ObjectDeserializationException("Could not find class " + className, e, ObjectDeserializationException.DeserializationExceptionCause.CLASS_NOT_FOUND);
         }
 
+        return deserialize(clazz.asSubclass(GravSerializable.class), serializer, otherArguments);
+    }
+
+    static <T extends GravSerializable> T deserialize(Class<T> clazz, GravSerializer serializer, Object... otherArguments) {
         if (MetaSerializable.class.isAssignableFrom(clazz)) {
-            return MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer, otherArguments);
+            return (T) MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer, otherArguments);
         }
         if (JsonMetaSerializable.class.isAssignableFrom(clazz)) {
             return JsonMetaSerializable.deserializeObject(clazz.asSubclass(JsonMetaSerializable.class), serializer, otherArguments);
@@ -61,7 +65,7 @@ public interface GravSerializable {
         try {
             try {
                 Method m = clazz.getMethod("deserialize", argumentTypes);
-                return m.invoke(null, arguments);
+                return (T) m.invoke(null, arguments);
             } catch (NoSuchMethodException ignored) {
             } catch (NullPointerException e) {
                 c1 = true;
@@ -69,11 +73,11 @@ public interface GravSerializable {
                 e.printStackTrace();
             }
             Constructor<?> constructor = clazz.getDeclaredConstructor(argumentTypes);
-            return constructor.newInstance(arguments);
+            return (T) constructor.newInstance(arguments);
         } catch (Exception e) {
             if (!c1)
-                throw new ObjectDeserializationException("ERROR: Could NOT find a deserialization method for " + className, e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
-            throw new ObjectDeserializationException("ERROR: Deserialization method non-static for " + className, e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
+                throw new ObjectDeserializationException("ERROR: Could NOT find a deserialization method for " + clazz.getName(), e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
+            throw new ObjectDeserializationException("ERROR: Deserialization method non-static for " + clazz.getName(), e, ObjectDeserializationException.DeserializationExceptionCause.NO_DESERIALIZATION_METHOD);
         }
     }
 

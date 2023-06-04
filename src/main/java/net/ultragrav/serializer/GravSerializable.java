@@ -50,7 +50,7 @@ public interface GravSerializable {
             return (T) MetaSerializable.deserializeObject(clazz.asSubclass(MetaSerializable.class), serializer, otherArguments);
         }
         if (JsonMetaSerializable.class.isAssignableFrom(clazz)) {
-            return JsonMetaSerializable.deserializeObject(clazz.asSubclass(JsonMetaSerializable.class), serializer, otherArguments);
+            return (T) JsonMetaSerializable.deserializeObject(clazz.asSubclass(JsonMetaSerializable.class), serializer, otherArguments);
         }
 
         Class<?>[] argumentTypes = new Class<?>[otherArguments.length + 1];

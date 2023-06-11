@@ -53,4 +53,11 @@
             <version>2.9.0</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>ultragrav</id>
+            <url>https://mvn.ultragrav.net/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
 </project>

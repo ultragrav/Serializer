@@ -649,6 +649,15 @@ public class Serializers {
             serializer.writeByte((byte) 0);
             return;
         }
+
+        // Fix for JsonMeta
+        if (obj instanceof JsonMeta) {
+            SerializerElement s = SERIALIZERS.get(31);
+            serializer.writeByte((byte) (31 + 1));
+            s.getSerializer().serialize(serializer, obj);
+            return;
+        }
+
         for (int i = 0; i < SERIALIZERS.size(); i++) {
             SerializerElement s = SERIALIZERS.get(i);
             if (s.getClazz().isInstance(obj)) {

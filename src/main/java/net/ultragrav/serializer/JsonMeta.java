@@ -606,7 +606,7 @@ public class JsonMeta implements GravSerializable {
         StringBuilder builder = new StringBuilder();
         builder.append("{\n");
         String objs = data.entrySet().stream()
-                .map(ent -> "\"" + ent.getKey() + "\": " + jsonStringify(ent.getValue()))
+                .map(ent -> "\"" + jsonEscape(ent.getKey()) + "\": " + jsonStringify(ent.getValue()))
                 .collect(Collectors.joining(",\n"));
         builder.append(objs);
         return builder.append("\n}").toString();

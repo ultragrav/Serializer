@@ -887,14 +887,20 @@ public class JsonMeta implements GravSerializable {
 
         int len = serializer.readInt();
 
+//        System.out.println("Len: " + len);
+
         for (int i = 0; i < len; i++) {
             byte type = serializer.readByte();
+//            System.out.println("Type: " + type);
+//            try {
             String key = serializer.readString();
+//            System.out.println("Key: " + key);
             Object object = null;
             if (type == 0) {
                 object = JsonMeta.deserialize(serializer, doDeserialization);
                 link(meta, (JsonMeta) object, key); // Bug fix: parent was not being set on deserialization.
             } else if (type == 1) {
+
                 int sl = -1;
                 if (version >= 2)
                     sl = serializer.readInt();
@@ -913,12 +919,14 @@ public class JsonMeta implements GravSerializable {
                         }
                     }
                 } else {
-                    serializer.reset();
                     meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
                     continue;
                 }
             }
             meta.data.put(key, object);
+//            } catch (Throwable t) {
+//                continue;
+//            }
         }
 
         return meta;

@@ -594,6 +594,11 @@ public class JsonMeta implements GravSerializable {
             builder.append(indent).append("  ").append(entry.getKey()).append(": ").append(valStr).append("\n");
         }
 
+        // Add undeserialized objects:
+        for (Map.Entry<String, GravSerializer> toD : toDeserialize.entrySet()) {
+            builder.append(indent).append("  ").append(toD.getKey()).append(": ").append(new String(toD.getValue().toByteArray())).append("\n");
+        }
+
         return builder.append(indent).append("}").toString();
     }
 

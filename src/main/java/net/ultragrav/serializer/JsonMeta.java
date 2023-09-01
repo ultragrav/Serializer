@@ -77,7 +77,9 @@ public class JsonMeta implements GravSerializable {
     public List<String> getKeys() {
         lock.lock();
         try {
-            return new ArrayList<>(this.data.keySet());
+            List<String> keys = new ArrayList<>(this.data.keySet());
+            keys.addAll(this.toDeserialize.keySet());
+            return keys;
         } finally {
             lock.unlock();
         }

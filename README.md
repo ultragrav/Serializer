@@ -1,4 +1,4 @@
-[![Build](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fci.ultragrav.net%2Fjob%2FSerializer)](https://ci.ultragrav.net/job/Serializer/)
+[![Build](https://img.shields.io/github/v/release/ultragrav/Serializer)](https://github.com/ultragrav/Serializer/releases)
 
 # Serializer
 A simple but versatile serialization system to convert objects and primitives into byte arrays or files.
@@ -14,7 +14,7 @@ A simple but versatile serialization system to convert objects and primitives in
 <dependency>
     <groupId>net.ultragrav</groupId>
     <artifactId>Serializer</artifactId>
-    <version>1.2.2</version>
+    <version>Check above</version>
 </dependency>
 ```
 

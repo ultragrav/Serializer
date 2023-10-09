@@ -57,7 +57,7 @@
     <distributionManagement>
         <repository>
             <id>ultragrav</id>
-            <url>https://mvn.ultragrav.net/repository/maven-releases/</url>
+            <url>https://mvn.ultragrav.net/releases/</url>
         </repository>
     </distributionManagement>
 </project>

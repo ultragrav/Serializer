@@ -140,7 +140,10 @@ public class JsonMeta implements GravSerializable {
                                 }
                             } catch (Exception e) {
                                 ser.reset();
-                                throw new RuntimeException("Failed to deserialize object: " + String.join(".", path), e);
+                                if (e instanceof ObjectDeserializationException) {
+                                    throw e;
+                                }
+                                throw new ObjectDeserializationException("Failed to deserialize object: " + String.join(".", path), e, ObjectDeserializationException.DeserializationExceptionCause.UNKNOWN);
                             }
                         }
                     }
@@ -894,23 +897,19 @@ public class JsonMeta implements GravSerializable {
 
         int len = serializer.readInt();
 
-//        System.out.println("Len: " + len);
-
         for (int i = 0; i < len; i++) {
             byte type = serializer.readByte();
-//            System.out.println("Type: " + type);
 //            try {
             String key = serializer.readString();
-//            System.out.println("Key: " + key);
             Object object = null;
             if (type == 0) {
                 object = JsonMeta.deserialize(serializer, doDeserialization);
                 link(meta, (JsonMeta) object, key); // Bug fix: parent was not being set on deserialization.
             } else if (type == 1) {
 
-                int sl = -1;
+                int blockLength = -1;
                 if (version >= 2)
-                    sl = serializer.readInt();
+                    blockLength = serializer.readInt();
 
                 if (doDeserialization) {
                     int markedPos = serializer.getReadPosition();
@@ -919,14 +918,14 @@ public class JsonMeta implements GravSerializable {
                     } catch (ObjectDeserializationException ex) {
                         if (version >= 2) {
                             serializer.setReadPosition(markedPos);
-                            meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
+                            meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(blockLength)));
                             continue;
                         } else {
                             throw new UnsupportedOperationException("Cannot create toDeserialize for data serialized before version 2.");
                         }
                     }
                 } else {
-                    meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(sl)));
+                    meta.toDeserialize.put(key, new GravSerializer(serializer.readBytes(blockLength)));
                     continue;
                 }
             }

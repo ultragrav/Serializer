@@ -989,7 +989,7 @@ public class JsonMeta implements GravSerializable {
         JsonMeta ret = new JsonMeta();
         lock.lock();
         try {
-            for (String key : getKeys()) {
+            for (String key : data.keySet()) {
                 Object val = get(key);
                 if (val instanceof JsonMeta) {
                     ret.set(key, ((JsonMeta) val).copy());

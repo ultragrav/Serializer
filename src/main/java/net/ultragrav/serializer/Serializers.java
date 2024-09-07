@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.*;
 
 public class Serializers {
+    private static final Map<String, String> RELOCATION_MAPPINGS = new ConcurrentHashMap<>();
+
     private static final List<SerializerElement> SERIALIZERS = new ArrayList<>();
 
     private static final Map<Class<?>, Serializer<?>> CUSTOM_SERIALIZERS = new HashMap<>();
@@ -187,6 +189,7 @@ public class Serializers {
             @Override
             public Enum<?> deserialize(GravSerializer serializer, Object... args) {
                 String className = serializer.readString();
+                className = computeRelocatedClassName(className);
 
                 int ordinal = serializer.readInt();
                 String name = null;
@@ -284,6 +287,7 @@ public class Serializers {
                 } else {
                     // Read the class name
                     String className = serializer.readString();
+                    className = computeRelocatedClassName(className);
 
                     // Get the class
                     Class<?> clazz;
@@ -685,6 +689,7 @@ public class Serializers {
         if (type == 0xFF) {
             Class<?> clazz;
             String className = serializer.readString();
+            className = computeRelocatedClassName(className);
             try {
                 clazz = Class.forName(className);
             } catch (ClassNotFoundException e) {
@@ -725,5 +730,25 @@ public class Serializers {
      */
     public static void registerSerializer(Class<?> clazz, Serializer<?> serializer) {
         CUSTOM_SERIALIZERS.put(clazz, serializer);
+    }
+
+    public static void addRelocation(String source, String target) {
+        RELOCATION_MAPPINGS.put(source, target);
+    }
+
+    private static String computeRelocatedClassName(String className) {
+        // Do exact matches first
+        for (Map.Entry<String, String> mapping : RELOCATION_MAPPINGS.entrySet()) {
+            if (className.equals(mapping.getKey())) {
+                className = mapping.getValue();
+            }
+        }
+
+        // Then packages, etc.
+        for (Map.Entry<String, String> mapping : RELOCATION_MAPPINGS.entrySet()) {
+            className = className.replace(mapping.getKey(), mapping.getValue());
+        }
+
+        return className;
     }
 }

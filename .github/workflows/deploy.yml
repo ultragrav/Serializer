@@ -1,8 +1,9 @@
 name: Deploy
 
 on:
+  workflow_dispatch:
   release:
-    types: [created, workflow_dispatch]
+    types: [created]
 
 jobs:
   deploy:
